@@ -1,0 +1,29 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+async function load(path) { const result = await build({ entryPoints:[path], bundle:true, write:false, platform:'node', format:'esm' }); return import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`); }
+const { resolver, selectPath, defaultOutput } = await load('src/dataflow/core.ts');
+const { prepareRequest, defaultFetch } = await load('src/dataflow/fetch.ts');
+const shape = (id, content, output = {}, extra = {}) => ({ id:`shape:${id}`, type:'block', props:{kind:'idea',content}, meta:{metalboard:{id,input:'',output:{...defaultOutput,...output}}}, ...extra });
+const a = shape('element_1','{"users":[{"name":"Ana"},{"name":"Bia"}],"count":0,"active":false,"empty":null}',{parseJson:true});
+test('full expressions preserve arrays, null, false and zero', () => {
+ const r=resolver([a]); assert.equal(r.interpolate('%element_1.count%'),0); assert.equal(r.interpolate('%element_1.active%'),false); assert.equal(r.interpolate('%element_1.empty%'),null); assert.equal(r.interpolate('%element_1.users%').length,2);
+});
+test('nested references, interpolation and transformed outputs', () => {
+ const b=shape('element_2','%element_1.users%',{mapPath:'name'}), c=shape('element_3','Oi %element_2[1]%');
+ assert.deepEqual(resolver([a,b,c]).output(b),['Ana','Bia']); assert.equal(resolver([a,b,c]).output(c),'Oi Bia');
+});
+test('path selection then template and custom values', () => { const b=shape('element_2','',{source:'value',value:'%element_1%',path:'users[0].name',template:'Olá %value%'}); assert.equal(resolver([a,b]).output(b),'Olá Ana'); });
+test('explicit input is available as output and as local placeholder', () => { const b=shape('b','Olá %input.name%'); b.meta.metalboard.input='%element_1.users[0]%'; assert.equal(resolver([a,b]).output(b),'Olá Ana'); b.meta.metalboard.output.source='input'; assert.deepEqual(resolver([a,b]).output(b),{name:'Ana'}); });
+test('direct and indirect cycles reject without recursion overflow', () => { const x=shape('x','%y%'),y=shape('y','%x%'); assert.match(resolver([x,y]).result(x).error,/circular/); assert.match(resolver([shape('x','%x%')]).result(shape('x','%x%')).error,/circular/); });
+test('missing IDs, duplicate aliases and missing fields reject', () => { const r=resolver([a]); assert.throws(()=>r.interpolate('%missing%'),/não encontrado/); assert.throws(()=>r.interpolate('%element_1.users[8]%'),/não encontrado/); assert.throws(()=>resolver([a,{...a,id:'shape:other'}]).interpolate('%element_1%'),/duplicado/); });
+test('prototype traversal and executable paths reject', () => { assert.throws(()=>selectPath({},'__proto__'),/permitida/); assert.throws(()=>selectPath({},'constructor'),/permitida/); assert.throws(()=>selectPath({},'users.map(x=>x)'),/inválido/); });
+test('native forms expose their internal rich text', () => { const form={id:'shape:form',type:'geo',props:{richText:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'Nome: %element_1.users[0].name%'}]}]}},meta:{}}; assert.equal(resolver([a,form]).output(form),'Nome: Ana'); });
+test('fetch and terminal never expose stale output during errors/runs', () => { for(const status of ['running','error','stale']) { const f=shape('f','',{},{props:{kind:'fetch'},meta:{execution:{status,value:'old'}}}); assert.equal(resolver([f]).result(f).ok,false); } });
+test('fetch defaults to parsed body', () => { const f=shape('f','',{},{props:{kind:'fetch'},meta:{execution:{status:'success',value:{items:[1,2]}}}}); assert.deepEqual(resolver([f]).output(f),{items:[1,2]}); });
+const pair = (key,value) => ({key,value,enabled:true}); const secrets={token:'fake-token',username:'tester',password:'fake-password'};
+test('REST path, query, headers and auth resolve correctly', () => { const r=prepareRequest({...defaultFetch,url:'https://example.test/users/{id}?sort=asc',params:[pair('id','a/b')],query:[pair('name','%element_1.users[0].name%')],headers:[pair('X-Count','%element_1.count%')],auth:'bearer'},s=>resolver([a]).interpolate(s),secrets); assert.equal(r.url,'https://example.test/users/a%2Fb?sort=asc&name=Ana'); assert.equal(r.headers['x-count'],'0'); assert.equal(r.headers.authorization,'Bearer fake-token'); });
+test('JSON bodies preserve types and quote escaping', () => { const r=prepareRequest({...defaultFetch,url:'https://example.test',method:'POST',bodyType:'json',body:'{"users":"%element_1.users%","enabled":"%element_1.active%","text":"x\\\"y"}'},s=>resolver([a]).interpolate(s),secrets); assert.deepEqual(JSON.parse(r.body),{users:[{name:'Ana'},{name:'Bia'}],enabled:false,text:'x"y'}); });
+test('invalid protocols, bodies, path params and timeouts block requests', () => { for(const delta of [{url:'file:///tmp/x'},{bodyType:'raw',body:'x'},{url:'https://example.test/{id}'},{timeoutMs:0}]) assert.throws(()=>prepareRequest({...defaultFetch,url:'https://example.test',...delta},s=>s,secrets)); });
+test('API key query and form encoding', () => { const r=prepareRequest({...defaultFetch,url:'https://example.test',method:'POST',auth:'apiKey',apiKeyIn:'query',bodyType:'form',body:'{"name":"A & B"}'},s=>s,secrets); assert.equal(new URL(r.url).searchParams.get('X-API-Key'),'fake-token'); assert.equal(r.body,'name=A+%26+B'); });
+test('restoring serialized board keeps expressions and transformations', () => { const b=shape('b','%element_1.users[1].name%'); const restored=JSON.parse(JSON.stringify([a,b])); assert.equal(resolver(restored).output(restored[1]),'Bia'); });

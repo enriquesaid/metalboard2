@@ -1,0 +1,6 @@
+{
+  "identifier": "main-capability",
+  "description": "Events for the main application window only",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

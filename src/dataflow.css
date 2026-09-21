@@ -1,0 +1,265 @@
+/* Hallmark · app-scope repair · dataflow overlay + panel (tokens.css) */
+/* --data-overlay sits left of tldraw's top-right style panel; the 174px inset tracks it */
+.data-overlay {
+  position: absolute;
+  top: 58px;
+  right: 174px;
+  z-index: 300;
+  pointer-events: none;
+  font-size: var(--text-sm);
+  color: var(--ink-1);
+  max-height: calc(100% - 140px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.data-toggle {
+  pointer-events: all;
+  background: color-mix(in srgb, var(--accent) 12%, var(--paper-2));
+  border: 1px solid var(--accent-line);
+  padding: 9px 12px;
+  border-radius: var(--r-md);
+  font-size: var(--text-xs);
+  box-shadow: 0 3px 12px #0003;
+  color: var(--ink-1);
+}
+.data-toggle:hover:not(:disabled),
+.data-toggle[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.data-panel {
+  pointer-events: all;
+  background: var(--paper-2);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-lg);
+  width: 330px;
+  max-width: calc(100vw - 32px);
+  overflow: auto;
+  padding: 16px;
+  box-shadow: 0 10px 35px #0005;
+  user-select: text;
+}
+.data-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.data-panel fieldset,
+.fetch-editor fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.data-panel label,
+.fetch-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: var(--text-xs);
+  color: var(--ink-2);
+  margin: 12px 0;
+}
+.data-panel input:not([type="checkbox"]),
+.data-panel textarea,
+.data-panel select,
+.fetch-content input:not([type="checkbox"]),
+.fetch-content select,
+.fetch-content textarea {
+  width: 100%;
+  border: 1px solid var(--line-3);
+  border-radius: var(--r-sm);
+  background: var(--paper-input);
+  color: var(--ink-1);
+  padding: 8px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.data-panel textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+.data-panel p,
+.fetch-editor p {
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.data-panel pre,
+.fetch-editor pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.65;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--paper-0);
+  padding: 10px;
+  border-radius: var(--r-sm);
+  user-select: text;
+}
+.data-reference {
+  width: 100%;
+  justify-content: space-between;
+  color: var(--accent);
+  font-size: var(--text-xs);
+}
+.data-panel label.data-check {
+  flex-direction: row;
+  align-items: center;
+}
+.data-check input,
+.pair-row input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+.data-section-title {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+  font-size: var(--text-xs);
+}
+.data-section-title span {
+  color: var(--accent);
+}
+.data-error {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--error-ink);
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+  max-height: 100px;
+  overflow: auto;
+}
+.data-element {
+  width: 100%;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-2);
+  font-size: var(--text-xs);
+}
+.data-element span {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.data-panel summary,
+.fetch-editor summary {
+  cursor: pointer;
+  margin: 16px 0 0;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+.data-message {
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  padding: 8px 0;
+}
+.element-reference {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--ink-3);
+  padding: 5px 13px;
+  border-top: 1px solid color-mix(in srgb, var(--line-3) 50%, transparent);
+  flex-shrink: 0;
+}
+.block-idea .element-reference {
+  color: var(--idea-ink-2);
+}
+.fetch-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  font-size: var(--text-xs);
+}
+.fetch-url {
+  display: flex;
+  gap: 7px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line-2);
+}
+.fetch-url select {
+  max-width: 90px;
+  color: var(--accent);
+}
+.fetch-url button {
+  min-width: 34px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: var(--r-sm);
+}
+.fetch-url button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  color: var(--accent-ink);
+}
+.fetch-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line-2);
+}
+.fetch-tabs button {
+  font-size: var(--text-xs);
+  padding: 6px 8px;
+  border-radius: var(--r-sm);
+  color: var(--ink-3);
+}
+.fetch-tabs button.selected {
+  background: color-mix(in srgb, var(--accent) 14%, var(--paper-2));
+  color: var(--ink-1);
+}
+.fetch-editor {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 13px;
+  min-height: 0;
+}
+.fetch-editor textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.pair-row {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 7px;
+  align-items: center;
+}
+.pair-list > button {
+  padding: 7px 0;
+  font-size: var(--text-xs);
+  color: var(--accent);
+}
+.pair-row button {
+  padding: 5px;
+}
+.fetch-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 13px;
+  border-top: 1px solid var(--line-2);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}
+.http-status {
+  color: var(--accent);
+  font-size: var(--text-xs);
+  margin: 5px 0;
+}
+@media (max-width: 850px) {
+  .data-overlay {
+    right: 12px;
+    top: 58px;
+  }
+  .data-panel {
+    width: 300px;
+  }
+}

@@ -1,0 +1,58 @@
+/* Hallmark · app-scope repair · genre: technical
+ * palette: sage accent on green-cast darks (one temperature) · type: system sans + ui-monospace
+ * replaces 122 one-off hex values with named tokens; type floor 10px
+ */
+:root {
+  /* paper — green-cast darks, single temperature */
+  --paper-0: #101211;
+  --paper-1: #141714;
+  --paper-2: #1a1e1a;
+  --paper-3: #212621;
+  --paper-input: #151a15;
+  --canvas: #121513;
+  /* lines */
+  --line-1: #262b26;
+  --line-2: #303630;
+  --line-3: #3c443c;
+  /* ink — ink-3 is the muted floor: 5.3:1 on paper-2 */
+  --ink-1: #e3e8e0;
+  --ink-2: #aab3a6;
+  --ink-3: #8b9484;
+  /* accent — one sage */
+  --accent: #c4dfa6;
+  --accent-strong: #d4eab8;
+  --accent-ink: #233018;
+  --accent-line: #46513a;
+  /* idea block — deliberate light inversion */
+  --idea-paper: #d9dfbd;
+  --idea-header: #ced6af;
+  --idea-ink: #303b29;
+  --idea-ink-2: #546442;
+  --idea-line: #b3bd92;
+  /* error */
+  --error-ink: #f0b199;
+  --error-bg: #321e1d;
+  --error-line: #74403b;
+  /* status */
+  --status-idle: #6a756a;
+  /* type — floor is 10px; nothing legible ships below it */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 16px;
+  --text-lg: 21px;
+  /* shape */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  /* motion — color/border only, never layout */
+  --dur-fast: 120ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* focus — ring shows instantly, never animated */
+  --focus-ring: var(--accent-strong);
+  --focus-ring-dark: #3d4d2b;
+  /* layers */
+  --z-toast: 500;
+}
