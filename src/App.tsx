@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Tldraw,
+  createShapeId,
   type Editor,
   getSnapshot,
   loadSnapshot,
@@ -8,6 +9,7 @@ import {
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  GitBranch,
 } from "lucide-react";
 import { BlockUtil, type BlockShape } from "./shapes";
 import { exampleSource } from "./preview";
@@ -15,6 +17,7 @@ import { MetalboardToolbar } from "./MetalboardToolbar";
 import { DataPanel } from "./DataPanel";
 import { installElementIds } from "./dataflow/editor";
 import { DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil } from "./dataflow/native-shapes";
+import { shapeHasMermaidText, selectionToMermaid } from "./mermaid-canvas";
 const shapeUtils = [BlockUtil, DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil];
 const components = { Toolbar: MetalboardToolbar, InFrontOfTheCanvas: DataPanel };
 export default function App() {
@@ -24,16 +27,23 @@ export default function App() {
       () => localStorage.getItem("metalboard-name") || "Meu próximo fluxo",
     );
   const input = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState({ zoom: 100, selected: 0 });
+  const [status, setStatus] = useState({ zoom: 100, selected: 0, mermaidable: false });
   useEffect(() => {
     if (!editor) return;
     const update = () => {
       const zoom = Math.round(editor.getZoomLevel() * 100);
       const selected = editor.getSelectedShapeIds().length;
+      const mermaidable = (() => {
+        for (const id of editor.getShapeAndDescendantIds(editor.getSelectedShapeIds())) {
+          const shape = editor.getShape(id);
+          if (shape && shapeHasMermaidText(shape)) return true;
+        }
+        return false;
+      })();
       setStatus((prev) =>
-        prev.zoom === zoom && prev.selected === selected
+        prev.zoom === zoom && prev.selected === selected && prev.mermaidable === mermaidable
           ? prev
-          : { zoom, selected },
+          : { zoom, selected, mermaidable },
       );
     };
     const unsubscribe = editor.store.listen(() => update(), { scope: "all" });
@@ -111,6 +121,25 @@ export default function App() {
     }
     return cleanup;
   }
+  function generateMermaid() {
+    if (!editor) return;
+    const source = selectionToMermaid(editor);
+    if (!source) {
+      notify("Selecione caixas, notas ou blocos — as setas ligadas entram junto");
+      return;
+    }
+    const bounds = editor.getSelectionPageBounds() ?? editor.getViewportPageBounds();
+    const id = createShapeId();
+    editor.createShape<BlockShape>({
+      id,
+      type: "block",
+      x: bounds.maxX + 60,
+      y: bounds.y,
+      props: { kind: "mermaid", title: "Diagrama da seleção", content: source, w: 520, h: 430 },
+    });
+    editor.select(id);
+    notify("Mermaid gerado a partir da seleção");
+  }
   function exportBoard() {
     if (!editor) return;
     const blob = new Blob(
@@ -179,6 +208,15 @@ export default function App() {
           </span>
         </div>
         <div className="header-actions">
+          <button
+            className="export-button"
+            title="Converte as caixas e setas selecionadas em um bloco Mermaid"
+            disabled={!status.mermaidable}
+            onClick={generateMermaid}
+          >
+            <GitBranch size={14} />
+            <span className="btn-label">Gerar Mermaid</span>
+          </button>
           <button
             title="Importar substitui o board atual; exporte para manter uma cópia"
             onClick={() => input.current?.click()}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260921T230636967Z-48167-4917baf6e298",
+  "runId": "20260921T230636967Z-48167-4917baf6e298",
+  "runStatus": "completed",
+  "coverage": {
+    "status": "complete",
+    "reasons": []
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "fdba029b9f638f087b74e65bc6eb6f462ef5138a",
+  "diffHash": "348b8c5d905304cd738a61f08ed8147bf9424b0736873f69d56f735ed6b8a498",
+  "rulesVersion": "unavailable",
+  "sessionHash": "9c335bff6f8924bea5276df0b9aab9b4be3905a8a6c50609ea7cb20b0cf3f037",
+  "reportRef": ".mimosa/reports/task-review-sess_1668f6b5-11da-44e1-bae2-a1eb437d0923-20260921T230636967Z-48167-4917baf6e298.json",
+  "events": [],
+  "observedFindingIds": [],
+  "verifiedFiles": [
+    {
+      "file": "src/mermaid-export.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/mermaid-canvas.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/App.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    }
+  ],
+  "recordedAt": "2026-09-21T23:06:37.216Z"
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "mimosa-hook-status/v1",
+  "recordedAt": "2026-09-22T01:02:28.205Z",
+  "sessionId": "sess_1668f6b5-11da-44e1-bae2-a1eb437d0923",
+  "event": "PostToolUse",
+  "toolName": "Edit",
+  "file": "src/mermaid-canvas.ts",
+  "outcome": "clear",
+  "coverage": "complete",
+  "findingCount": 0,
+  "durationMs": 7,
+  "hostState": "hook_complete",
+  "reportHint": ".mimosa/reports/"
+}
