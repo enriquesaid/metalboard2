@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod http;
+mod scrape;
 use std::os::unix::process::CommandExt;
 use std::{
     collections::HashMap,
@@ -180,7 +181,7 @@ fn main() {
         .manage(processes)
         .manage(terminals)
         .manage(http::Requests::default())
-        .invoke_handler(tauri::generate_handler![execute_command, start_terminal, write_terminal, cancel_command, http::http_fetch, http::cancel_fetch])
+        .invoke_handler(tauri::generate_handler![execute_command, start_terminal, write_terminal, cancel_command, http::http_fetch, http::cancel_fetch, scrape::scrape_page])
         .build(tauri::generate_context!())
         .expect("Falha ao iniciar Metalboard")
         .run(move |_, event| {

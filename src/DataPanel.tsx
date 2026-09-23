@@ -34,7 +34,7 @@ export function DataPanel() {
         </fieldset>
         <div className="data-section-title">Output entregue <span>{result?.ok ? (Array.isArray(result.value) ? 'array' : result.value === null ? 'null' : typeof result.value) : 'erro'}</span></div>
         <pre className={result?.ok ? 'data-output' : 'data-error'}>{result?.ok ? display(result.value) : result?.error}</pre>
-        <p>Textos e formas: conteúdo interno. Terminal: última saída concluída. Fetch: body JSON/texto. Código: fonte. Imagem/vídeo: recurso. Grupo: outputs dos filhos. Demais: propriedades.</p>
+        <p>Textos e formas: conteúdo interno. Terminal: última saída concluída. Fetch: body JSON/texto. Embed: página extraída (Markdown/JSON). Código: fonte. Imagem/vídeo: recurso. Grupo: outputs dos filhos. Demais: propriedades.</p>
       </div>}
       {message && <div role="status" className="data-message">{message}</div>}
       <details><summary>Referências do board ({elements.length})</summary>{elements.map(s => <button className="data-element" key={s.id} onClick={() => { editor.setCurrentTool('select'); editor.select(s.id); }}><code>%{config(s).id}%</code><span>{String((s.props as Record<string,unknown>).title || s.type)}</span></button>)}</details>

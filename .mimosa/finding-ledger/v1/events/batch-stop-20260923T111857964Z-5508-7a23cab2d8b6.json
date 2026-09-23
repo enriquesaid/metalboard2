@@ -1,0 +1,141 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260923T111857964Z-5508-7a23cab2d8b6",
+  "runId": "20260923T111857964Z-5508-7a23cab2d8b6",
+  "runStatus": "completed",
+  "coverage": {
+    "status": "complete",
+    "reasons": []
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "cd737f8acc86ccf19b26563bdaa925cd3d8bdf14",
+  "diffHash": "0b8c6289e097ab20e9a276ce74332ed1b2a1ac8f01d45be9035fc0a5982ca39e",
+  "rulesVersion": "unavailable",
+  "sessionHash": "2f8fb31610682669c5848993d56761f5e5a6c8874187574427af4655a43a76d3",
+  "reportRef": ".mimosa/reports/task-review-sess_849cb9c6-51cb-4994-92be-2f3b9db2ace7-20260923T111857964Z-5508-7a23cab2d8b6.json",
+  "events": [
+    {
+      "eventId": "hook-8d4affa5b6a450ce2cdbabaac59acd58",
+      "findingId": "mimosa-0862cef92b2fe36ec6b8546e",
+      "type": "finding_observed",
+      "at": "2026-09-23T11:18:57.964Z",
+      "identity": {
+        "projectRelativeFile": "src/dataflow/scrape.ts",
+        "ruleId": "security",
+        "codeEvidenceHash": "4140d1f0d56e0eb2a237913650273bc55d4bf5fdde8a55dfeb6203fb76e51a54",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 62,
+      "endLine": 62,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "4140d1f0d56e0eb2a237913650273bc55d4bf5fdde8a55dfeb6203fb76e51a54"
+      },
+      "sequence": 0
+    },
+    {
+      "eventId": "hook-0a51226b035dfd4fb01aab99dca4fe44",
+      "findingId": "mimosa-9cfdc79b29a78c9017de225a",
+      "type": "finding_observed",
+      "at": "2026-09-23T11:18:57.964Z",
+      "identity": {
+        "projectRelativeFile": "src/dataflow/scrape.ts",
+        "ruleId": "security",
+        "codeEvidenceHash": "ecaef23dc5cf9e73528f7847425bd6eea08a722dbdaa7529af8672e8d7d63073",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 99,
+      "endLine": 99,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "ecaef23dc5cf9e73528f7847425bd6eea08a722dbdaa7529af8672e8d7d63073"
+      },
+      "sequence": 1
+    },
+    {
+      "eventId": "hook-6012ba55563819fb8183a0a5c67fa551",
+      "findingId": "mimosa-1fe35cc4e7047e3be1daf800",
+      "type": "finding_observed",
+      "at": "2026-09-23T11:18:57.964Z",
+      "identity": {
+        "projectRelativeFile": "src/dataflow/scrape.ts",
+        "ruleId": "security",
+        "codeEvidenceHash": "78238ba084673cd73ddfd65451a5ab42ae5ce4641ddfcc6444b307dc9e57292e",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 216,
+      "endLine": 216,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "78238ba084673cd73ddfd65451a5ab42ae5ce4641ddfcc6444b307dc9e57292e"
+      },
+      "sequence": 2
+    }
+  ],
+  "observedFindingIds": [
+    "mimosa-0862cef92b2fe36ec6b8546e",
+    "mimosa-9cfdc79b29a78c9017de225a",
+    "mimosa-1fe35cc4e7047e3be1daf800"
+  ],
+  "verifiedFiles": [
+    {
+      "file": "src/dataflow/scrape.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/dataflow/core.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/EmbedBlock.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/shapes.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/MetalboardToolbar.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/DataPanel.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src-tauri/src/scrape.rs",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src-tauri/src/main.rs",
+      "direct": "complete",
+      "projectContext": "partial"
+    }
+  ],
+  "recordedAt": "2026-09-23T11:18:58.235Z"
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "mimosa-hook-status/v1",
+  "recordedAt": "2026-09-23T11:18:31.342Z",
+  "sessionId": "sess_849cb9c6-51cb-4994-92be-2f3b9db2ace7",
+  "event": "PostToolUse",
+  "toolName": "Write",
+  "file": "/Users/sassa/.zcode/cli/memories/projects/metalboard2-03cfacded81b7818/memory/embed-url-element.md",
+  "outcome": "clear",
+  "coverage": "complete",
+  "findingCount": 0,
+  "durationMs": 2,
+  "hostState": "hook_complete",
+  "reportHint": ".mimosa/reports/"
+}

@@ -55,7 +55,7 @@ export function resolver(shapes: DataShape[], asset?: (id: string) => unknown) {
     const p = shape.props as Record<string, unknown>;
     const text = (source: string) => interpolate(source, stack, source.includes('%input') ? { input: input(shape, stack) } : {});
     if (shape.type === 'block') {
-      if (p.kind === 'fetch' || p.kind === 'terminal') {
+      if (p.kind === 'fetch' || p.kind === 'terminal' || p.kind === 'embed') {
         const run = shape.meta.execution as { status: string; value?: unknown; error?: string } | undefined;
         if (!run || run.status !== 'success') throw new Error(run?.error || (run?.status === 'running' ? 'Execução em andamento.' : 'Execute o elemento para produzir um output.'));
         return run.value;

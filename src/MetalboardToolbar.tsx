@@ -1,5 +1,5 @@
 import { DefaultToolbar, createShapeId, useEditor, useValue } from "tldraw";
-import { Code2, FileText, Terminal, Globe, GitBranch } from "lucide-react";
+import { AppWindow, Code2, FileText, Terminal, Globe, GitBranch } from "lucide-react";
 import { type BlockShape } from "./shapes";
 import { exampleSource } from "./preview";
 
@@ -8,6 +8,7 @@ const blocks = [
   { kind: "terminal", label: "Terminal", title: "Terminal", icon: Terminal },
   { kind: "code", label: "Componente", title: "Novo componente", icon: Code2 },
   { kind: "fetch", label: "Fetch", title: "Fetch", icon: Globe },
+  { kind: "embed", label: "Embed", title: "Embed de URL", icon: AppWindow },
   { kind: "mermaid", label: "Mermaid", title: "Novo diagrama", icon: GitBranch },
 ] as const;
 
@@ -17,8 +18,8 @@ export function MetalboardToolbar() {
   function add(block: (typeof blocks)[number]) {
     const center = editor.getViewportPageBounds().center;
     const id = createShapeId();
-    const w = block.kind === "fetch" ? 580 : block.kind === "code" ? 460 : block.kind === "mermaid" ? 520 : 400;
-    const h = block.kind === "fetch" ? 440 : block.kind === "code" ? 390 : block.kind === "mermaid" ? 430 : 300;
+    const w = block.kind === "embed" ? 620 : block.kind === "fetch" ? 580 : block.kind === "code" ? 460 : block.kind === "mermaid" ? 520 : 400;
+    const h = block.kind === "embed" ? 470 : block.kind === "fetch" ? 440 : block.kind === "code" ? 390 : block.kind === "mermaid" ? 430 : 300;
     editor.setCurrentTool("select");
     editor.createShape<BlockShape>({
       id, type: "block", x: center.x - w / 2, y: center.y - h / 2,

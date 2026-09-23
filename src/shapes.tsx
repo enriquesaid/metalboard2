@@ -8,6 +8,7 @@ import {
   useEditor,
 } from "tldraw";
 import {
+  AppWindow,
   Check,
   Code2,
   Copy,
@@ -22,6 +23,7 @@ import {
 import { buildPreview } from "./preview";
 import { desktopAvailable, startTerminal } from "./runtime";
 import { FetchBlock } from "./FetchBlock";
+import { EmbedBlock } from "./EmbedBlock";
 import { useDataResolver, updateMeta } from "./dataflow/editor";
 import { config, display } from "./dataflow/core";
 export type BlockShape = TLBaseShape<
@@ -190,7 +192,9 @@ function Block({ shape }: { shape: BlockShape }) {
     void activeRun.current.write(`${p.content}\n`).then(() => update({ content: "" })).catch((e) => setResult(String(e)));
   }
   const icon =
-    p.kind === "fetch" ? <Globe size={14} /> : p.kind === "terminal" ? (
+    p.kind === "fetch" ? <Globe size={14} /> : p.kind === "embed" ? (
+      <AppWindow size={14} />
+    ) : p.kind === "terminal" ? (
       <Terminal size={14} />
     ) : p.kind === "code" ? (
       <Code2 size={14} />
@@ -218,10 +222,10 @@ function Block({ shape }: { shape: BlockShape }) {
             : p.kind === "mermaid"
               ? "DIAGRAM"
               : p.kind === "terminal"
-              ? "LOCAL"
-              : p.kind === "output"
-                ? "SNAPSHOT"
-                : p.kind === "fetch" ? "REST" : "NOTA"}
+                ? "LOCAL"
+                : p.kind === "output"
+                  ? "SNAPSHOT"
+                  : p.kind === "fetch" ? "REST" : p.kind === "embed" ? "WEB" : "NOTA"}
         </span>
       </div>
       <div
@@ -231,6 +235,7 @@ function Block({ shape }: { shape: BlockShape }) {
         onWheel={(e) => e.stopPropagation()}
       >
         {p.kind === 'fetch' && <FetchBlock shape={shape} />}
+        {p.kind === 'embed' && <EmbedBlock shape={shape} />}
         {p.kind === "mermaid" && <MermaidBlock shape={shape} />}
         {p.kind === "idea" && (
           <textarea
@@ -410,7 +415,7 @@ function Block({ shape }: { shape: BlockShape }) {
           </>
         )}
       </div>
-      {p.kind !== 'fetch' && <div className="element-reference" title="Configure no painel Dados do elemento">%{config(shape).id}%</div>}
+      {!['fetch', 'embed'].includes(p.kind) && <div className="element-reference" title="Configure no painel Dados do elemento">%{config(shape).id}%</div>}
     </HTMLContainer>
   );
 }
