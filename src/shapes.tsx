@@ -582,7 +582,7 @@ function MermaidBlock({ shape }: { shape: BlockShape }) {
   const render = async (value: string) => {
     try {
       const mermaid = (await import("mermaid")).default;
-      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "dark" });
+      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "neutral" });
       const result = await mermaid.render(`metalboard-mermaid-${shape.id.replace(/[^a-zA-Z0-9]/g, "")}`, value);
       setSvg(result.svg);
       setError("");
@@ -611,17 +611,23 @@ function MermaidBlock({ shape }: { shape: BlockShape }) {
     }
   }
   return <div className="mermaid-editor">
-    <textarea
-      aria-label="Código Mermaid"
-      className="mermaid-source"
-      value={source}
-      spellCheck={false}
-      onChange={(e) => { setSource(e.target.value); editor.updateShape<BlockShape>({ id: shape.id, type: "block", props: { content: e.target.value } }); }}
-    />
-    {error ? <div className="mermaid-error">{error}</div> : <div className="mermaid-preview" dangerouslySetInnerHTML={{ __html: svg }} />}
-    <div className="block-actions">
-      <span>Preview Mermaid</span>
-      <button className="primary-small" disabled={converting || !!error} onClick={() => void convert()}>
+    <section className="mermaid-pane mermaid-pane--source">
+      <div className="mermaid-pane-header"><span>Fonte</span><code>MERMAID</code></div>
+      <textarea
+        aria-label="Código Mermaid"
+        className="mermaid-source"
+        value={source}
+        spellCheck={false}
+        onChange={(e) => { setSource(e.target.value); editor.updateShape<BlockShape>({ id: shape.id, type: "block", props: { content: e.target.value } }); }}
+      />
+    </section>
+    <section className="mermaid-pane mermaid-pane--preview">
+      <div className="mermaid-pane-header"><span>Preview</span><em className={error ? 'is-error' : 'is-ready'}>{error ? 'Erro de sintaxe' : 'Sincronizado'}</em></div>
+      {error ? <div className="mermaid-error" role="alert">{error}</div> : <div className="mermaid-preview" dangerouslySetInnerHTML={{ __html: svg }} />}
+    </section>
+    <div className="block-actions mermaid-actions">
+      <span>Gera formas editáveis no board</span>
+      <button className="ui-action ui-action--primary" disabled={converting || !!error} aria-busy={converting} onClick={() => void convert()}>
         <GitBranch size={12} />
         {converting ? "Convertendo…" : "Transformar no canvas"}
       </button>

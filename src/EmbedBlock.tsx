@@ -71,8 +71,8 @@ export function EmbedBlock({ shape }: { shape: BlockShape }) {
   return <div className="fetch-content embed-content">
     <div className="fetch-url">
       <input aria-label="URL da página" placeholder="https://exemplo.com/pagina" spellCheck={false} value={shape.props.content} onChange={e => editor.updateShape<BlockShape>({ id: shape.id, type: 'block', props: { content: e.target.value } })} onKeyDown={e => { if (e.key === 'Enter') load(); }} />
-      <button title="Incorporar a página no bloco" onClick={load}><Play size={14} /></button>
-      {settings.loadedUrl && <button title="Abrir no navegador" onClick={() => window.open(settings.loadedUrl, '_blank', 'noopener')}><ExternalLink size={14} /></button>}
+      <button className="ui-icon-button ui-icon-button--primary" aria-label="Incorporar página" title="Incorporar a página no bloco" onClick={load}><Play size={14} /></button>
+      {settings.loadedUrl && <button className="ui-icon-button" aria-label="Abrir no navegador" title="Abrir no navegador" onClick={() => window.open(settings.loadedUrl, '_blank', 'noopener')}><ExternalLink size={14} /></button>}
     </div>
     <div className="fetch-tabs">{[['page', 'Página'], ['output', 'Output']].map(([id, label]) => <button key={id} className={tab === id ? 'selected' : ''} onClick={() => setTab(id)}>{label}</button>)}</div>
     {tab === 'page' && <div className="embed-page">
@@ -84,7 +84,7 @@ export function EmbedBlock({ shape }: { shape: BlockShape }) {
     {tab === 'output' && <div className="fetch-editor">
       <fieldset disabled={running}>
         <label>Formato do output<select aria-label="Formato do output" value={settings.format} onChange={e => patch({ format: e.target.value as ScrapeFormat })}><option value="markdown">Markdown da página</option><option value="json">Relatório JSON</option></select></label>
-        <button className="primary-small embed-extract" disabled={!shape.props.content.trim()} onClick={() => void extract()}><Play size={12} />{running ? 'Extraindo…' : 'Extrair dados da página'}</button>
+        <button className="ui-action ui-action--primary embed-extract" disabled={!shape.props.content.trim()} aria-busy={running} onClick={() => void extract()}><Play size={12} />{running ? 'Extraindo…' : 'Extrair dados da página'}</button>
         <p>Referência: <code>%{config(shape).id}%</code>. A extração busca o HTML {desktopAvailable ? 'pelo transporte nativo (sem CORS)' : 'pelo navegador (sujeita a CORS)'} e gera o output no formato escolhido. Caminhos, mapeamento e template podem ser ajustados no painel Dados do elemento.</p>
       </fieldset>
       {saved && <div className="http-status">HTTP {saved.status} · {saved.durationMs} ms · {new Date(saved.completedAt).toLocaleString('pt-BR')} · {saved.contentType.split(';')[0] || 'sem content-type'}</div>}
