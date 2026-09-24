@@ -3,6 +3,7 @@
  * replaces 122 one-off hex values with named tokens; type floor 10px
  */
 :root {
+  color-scheme: dark light;
   /* paper — green-cast darks, single temperature */
   --paper-0: #101211;
   --paper-1: #141714;
@@ -55,4 +56,29 @@
   --focus-ring-dark: #3d4d2b;
   /* layers */
   --z-toast: 500;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --paper-0: #eef1ec;
+    --paper-1: #f7f9f5;
+    --paper-2: #ffffff;
+    --paper-3: #e6ebe3;
+    --paper-input: #f8faf6;
+    --canvas: #e9eee7;
+    --line-1: #d7ddd3;
+    --line-2: #c7cec3;
+    --line-3: #aeb8aa;
+    --ink-1: #1c251b;
+    --ink-2: #4d5a4a;
+    --ink-3: #667363;
+    --accent: #526f36;
+    --accent-strong: #3d5e20;
+    --accent-ink: #f5faef;
+    --accent-line: #9cac8e;
+    --error-ink: #8c3227;
+    --error-bg: #fae8e4;
+    --error-line: #d29a91;
+    --status-idle: #788276;
+    --focus-ring: #486b28;
+  }
 }

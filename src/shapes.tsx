@@ -129,6 +129,7 @@ function Block({ shape }: { shape: BlockShape }) {
     [p.kind, resolvedContent.ok, contentText],
   );
   const noteArea = useRef<HTMLTextAreaElement>(null);
+  const confirmButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!noteFocused) return;
     // mesmo rAF do título: focar durante o pointerdown que abriu a edição
@@ -139,6 +140,11 @@ function Block({ shape }: { shape: BlockShape }) {
   const [editing, setEditing] = useState(false),
     [confirm, setConfirm] = useState(false),
     [running, setRunning] = useState(false);
+  useEffect(() => {
+    if (!confirm) return;
+    const frame = requestAnimationFrame(() => confirmButton.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [confirm]);
   const [output, setOutput] = useState(""),
     [result, setResult] = useState(""),
     [cancel, setCancel] = useState<null | (() => void)>(null);
@@ -349,15 +355,14 @@ function Block({ shape }: { shape: BlockShape }) {
               placeholder={"Uma ideia começa aqui… · markdown suportado"}
             />
           ) : resolvedContent.ok ? (
-            <div
-              className="note-markdown"
-              role="button"
-              aria-label="Editar ideia"
-              onPointerDown={(e) => {
-                if (e.button === 0) setNoteFocused(true);
-              }}
-              dangerouslySetInnerHTML={{ __html: noteHtml }}
-            />
+            <>
+              <button className="note-edit" type="button" onClick={() => setNoteFocused(true)}>Editar ideia</button>
+              <div
+                className="note-markdown"
+                onDoubleClick={() => setNoteFocused(true)}
+                dangerouslySetInnerHTML={{ __html: noteHtml }}
+              />
+            </>
           ) : (
             <div className="note-markdown note-error">{contentText}</div>
           ))}
@@ -429,7 +434,23 @@ function Block({ shape }: { shape: BlockShape }) {
               )}
             </div>
             {confirm && (
-              <div className="confirm-overlay">
+              <div
+                className="confirm-overlay"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby={`terminal-confirm-title-${shape.id}`}
+                aria-describedby={`terminal-confirm-description-${shape.id}`}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setConfirm(false);
+                  if (event.key === "Tab") {
+                    const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button"));
+                    const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+                    const next = event.shiftKey ? (index <= 0 ? buttons.length - 1 : index - 1) : (index + 1) % buttons.length;
+                    event.preventDefault();
+                    buttons[next]?.focus();
+                  }
+                }}
+              >
                 <button
                   className="close-confirm"
                   aria-label="Fechar confirmação"
@@ -437,10 +458,10 @@ function Block({ shape }: { shape: BlockShape }) {
                 >
                   <X size={16} />
                 </button>
-                <b>Executar no computador?</b>
-                <p>Diretório: {pending?.cwd || "padrão do aplicativo"}</p>
+                <b id={`terminal-confirm-title-${shape.id}`}>Executar no computador?</b>
+                <p id={`terminal-confirm-description-${shape.id}`}>Diretório: {pending?.cwd || "padrão do aplicativo"}</p>
                 <pre>{pending?.command}</pre>
-                <button className="primary-small" onClick={() => void run()}>
+                <button ref={confirmButton} className="primary-small" onClick={() => void run()}>
                   <Play size={12} />
                   Confirmar execução
                 </button>
@@ -472,16 +493,30 @@ function Block({ shape }: { shape: BlockShape }) {
         )}
         {p.kind === "code" && (
           <>
-            <div className="code-tabs">
+            <div className="code-tabs" role="tablist" aria-label="Visualização do componente">
               <button
+                type="button"
+                role="tab"
+                id={`preview-tab-${shape.id}`}
+                aria-selected={!editing}
+                aria-controls={`preview-panel-${shape.id}`}
+                tabIndex={!editing ? 0 : -1}
                 className={!editing ? "selected" : ""}
                 onClick={() => setEditing(false)}
+                onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setEditing(true); (event.currentTarget.nextElementSibling as HTMLButtonElement)?.focus(); } }}
               >
                 Preview
               </button>
               <button
+                type="button"
+                role="tab"
+                id={`code-tab-${shape.id}`}
+                aria-selected={editing}
+                aria-controls={`code-panel-${shape.id}`}
+                tabIndex={editing ? 0 : -1}
                 className={editing ? "selected" : ""}
                 onClick={() => setEditing(true)}
+                onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setEditing(false); (event.currentTarget.previousElementSibling as HTMLButtonElement)?.focus(); } }}
               >
                 Código
               </button>
@@ -506,6 +541,9 @@ function Block({ shape }: { shape: BlockShape }) {
             </div>
             {editing ? (
               <textarea
+                id={`code-panel-${shape.id}`}
+                role="tabpanel"
+                aria-labelledby={`code-tab-${shape.id}`}
                 className="code-input"
                 aria-label="Código do componente"
                 spellCheck={false}
@@ -513,9 +551,11 @@ function Block({ shape }: { shape: BlockShape }) {
                 onChange={(e) => update({ content: e.target.value })}
               />
             ) : preview.error ? (
-              <pre className="preview-error">{preview.error}</pre>
+              <pre id={`preview-panel-${shape.id}`} role="tabpanel" aria-labelledby={`preview-tab-${shape.id}`} className="preview-error">{preview.error}</pre>
             ) : (
               <iframe
+                id={`preview-panel-${shape.id}`}
+                aria-labelledby={`preview-tab-${shape.id}`}
                 title={p.title}
                 sandbox="allow-scripts"
                 srcDoc={preview.html}

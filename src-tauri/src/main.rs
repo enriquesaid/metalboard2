@@ -8,7 +8,7 @@ use std::{
     process::{ChildStdin, Command, Stdio},
     sync::{Arc, Mutex},
 };
-use tauri::{Emitter, State};
+use tauri::{menu::{Menu, MenuItemBuilder, MenuItemKind, PredefinedMenuItem}, Emitter, State};
 struct TerminalProcess {
     pid: u32,
     stdin: ChildStdin,
@@ -181,6 +181,37 @@ fn main() {
         .manage(processes)
         .manage(terminals)
         .manage(http::Requests::default())
+        .menu(|app| {
+            let menu = Menu::default(app)?;
+            if let Some(file_menu) = menu.items()?.into_iter().find_map(|item| match item {
+                MenuItemKind::Submenu(submenu) if submenu.text().ok().as_deref() == Some("File") => Some(submenu),
+                _ => None,
+            }) {
+                let import = MenuItemBuilder::with_id("board.import", "Import Board…")
+                    .accelerator("CmdOrCtrl+O")
+                    .build(app)?;
+                let export = MenuItemBuilder::with_id("board.export", "Export Board…")
+                    .accelerator("CmdOrCtrl+Shift+S")
+                    .build(app)?;
+                let mermaid = MenuItemBuilder::with_id("board.mermaid", "Generate Mermaid from Selection")
+                    .accelerator("CmdOrCtrl+Shift+M")
+                    .build(app)?;
+                let separator = PredefinedMenuItem::separator(app)?;
+                file_menu.prepend_items(&[&import, &export, &mermaid, &separator])?;
+            }
+            Ok(menu)
+        })
+        .on_menu_event(|app, event| {
+            let command = match event.id().as_ref() {
+                "board.import" => Some("import"),
+                "board.export" => Some("export"),
+                "board.mermaid" => Some("mermaid"),
+                _ => None,
+            };
+            if let Some(command) = command {
+                let _ = app.emit("metalboard-menu", command);
+            }
+        })
         .invoke_handler(tauri::generate_handler![execute_command, start_terminal, write_terminal, cancel_command, http::http_fetch, http::cancel_fetch, scrape::scrape_page])
         .build(tauri::generate_context!())
         .expect("Falha ao iniciar Metalboard")

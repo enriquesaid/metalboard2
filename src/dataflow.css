@@ -34,6 +34,9 @@
   .dataflow-edge {
     animation: none;
   }
+  .dataflow-pulse {
+    display: none;
+  }
 }
 
 .data-overlay {

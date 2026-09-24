@@ -258,12 +258,42 @@ footer > span {
   transform: translateX(-50%);
   background: var(--accent);
   color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 12px 20px;
   border-radius: var(--r-md);
   font-size: var(--text-sm);
   z-index: var(--z-toast);
   max-width: 80vw;
 }
+.toast button {
+  border: 1px solid currentColor;
+  border-radius: var(--r-sm);
+  padding: 5px 8px;
+}
+.app-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-toast) + 10);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, #000 52%, transparent);
+}
+.app-dialog {
+  width: min(430px, 100%);
+  padding: 22px;
+  border: 1px solid var(--line-3);
+  border-radius: var(--r-lg);
+  background: var(--paper-2);
+  box-shadow: 0 22px 70px #0008;
+  color: var(--ink-1);
+}
+.app-dialog h2 { margin: 0 0 10px; font-size: var(--text-lg); }
+.app-dialog p { margin: 0; color: var(--ink-2); line-height: 1.5; }
+.app-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.app-dialog-actions button { padding: 8px 12px; border: 1px solid var(--line-3); border-radius: var(--r-md); }
 .block {
   border: 1px solid var(--line-2);
   border-radius: var(--r-lg);
@@ -378,6 +408,15 @@ footer > span {
   line-height: 1.7;
   letter-spacing: -0.3px;
   cursor: text;
+}
+.note-edit {
+  align-self: flex-end;
+  margin: 8px 10px 0;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--idea-ink) 25%, transparent);
+  border-radius: var(--r-sm);
+  color: var(--idea-ink);
+  font-size: var(--text-xs);
 }
 .note-markdown > :first-child {
   margin-top: 0;

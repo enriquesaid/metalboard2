@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import {
   Tldraw,
   createShapeId,
@@ -19,6 +20,7 @@ import { DataFlowEdges } from "./dataflow/edges-overlay";
 import { installElementIds } from "./dataflow/editor";
 import { DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil } from "./dataflow/native-shapes";
 import { installScrollThrough } from "./scrollable";
+import { desktopAvailable } from "./runtime";
 import { shapeHasMermaidText, selectionToMermaid } from "./mermaid-canvas";
 const shapeUtils = [BlockUtil, DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil];
 const components = {
@@ -30,6 +32,7 @@ const components = {
     </>
   ),
 };
+type ImportBackup = { name: string; snapshot: ReturnType<typeof getSnapshot> };
 export default function App() {
   const [editor, setEditor] = useState<Editor>(),
     [message, setMessage] = useState(""),
@@ -37,6 +40,9 @@ export default function App() {
       () => localStorage.getItem("metalboard-name") || "Meu próximo fluxo",
     );
   const input = useRef<HTMLInputElement>(null);
+  const importConfirm = useRef<HTMLButtonElement>(null);
+  const [pendingImport, setPendingImport] = useState<File>();
+  const [importBackup, setImportBackup] = useState<ImportBackup>();
   const [status, setStatus] = useState({ zoom: 100, selected: 0, mermaidable: false });
   useEffect(() => installScrollThrough(), []);
   useEffect(() => {
@@ -68,7 +74,7 @@ export default function App() {
   function mount(e: Editor) {
     const cleanup = installElementIds(e);
     setEditor(e);
-    e.user.updateUserPreferences({ colorScheme: "dark" });
+    e.user.updateUserPreferences({ colorScheme: "system" });
     e.updateInstanceState({ isGridMode: true });
     if (
       !e.getCurrentPageShapes().length &&
@@ -190,12 +196,39 @@ export default function App() {
         setName(data.name);
         localStorage.setItem("metalboard-name", data.name);
       }
+      setImportBackup({ name, snapshot: previous });
+      setPendingImport(undefined);
       editor.zoomToFit();
-      notify("Workspace importado");
+      notify("Board importado. Você pode desfazer esta substituição.");
     } catch (e) {
       notify(`Não foi possível importar: ${String(e)}`);
     }
   }
+  function undoImport() {
+    if (!editor || !importBackup) return;
+    loadSnapshot(editor.store, importBackup.snapshot);
+    setName(importBackup.name);
+    localStorage.setItem("metalboard-name", importBackup.name);
+    setImportBackup(undefined);
+    editor.zoomToFit();
+    notify("Board anterior restaurado");
+  }
+  useEffect(() => {
+    if (!pendingImport) return;
+    const frame = requestAnimationFrame(() => importConfirm.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [pendingImport]);
+  useEffect(() => {
+    if (!desktopAvailable) return;
+    let cancelled = false;
+    let dispose: (() => void) | undefined;
+    void listen<string>("metalboard-menu", ({ payload }) => {
+      if (payload === "import") input.current?.click();
+      if (payload === "export") exportBoard();
+      if (payload === "mermaid") generateMermaid();
+    }).then((unlisten) => { if (cancelled) unlisten(); else dispose = unlisten; });
+    return () => { cancelled = true; dispose?.(); };
+  }, [editor, name, status.mermaidable]);
   return (
     <div className="app">
       <header className="topbar">
@@ -268,6 +301,36 @@ export default function App() {
       {message && (
         <div role="status" className="toast">
           {message}
+          {importBackup && message.startsWith("Board importado") && <button onClick={undoImport}>Desfazer importação</button>}
+        </div>
+      )}
+      {pendingImport && (
+        <div className="app-dialog-backdrop" onMouseDown={() => setPendingImport(undefined)}>
+          <div
+            className="app-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="import-title"
+            aria-describedby="import-description"
+            onMouseDown={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setPendingImport(undefined);
+              if (event.key === "Tab") {
+                const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button"));
+                const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+                const next = event.shiftKey ? (index <= 0 ? buttons.length - 1 : index - 1) : (index + 1) % buttons.length;
+                event.preventDefault();
+                buttons[next]?.focus();
+              }
+            }}
+          >
+            <h2 id="import-title">Substituir o board atual?</h2>
+            <p id="import-description">O arquivo <strong>{pendingImport.name}</strong> substituirá o conteúdo atual. O Metalboard manterá uma cópia temporária para desfazer a importação.</p>
+            <div className="app-dialog-actions">
+              <button onClick={() => setPendingImport(undefined)}>Cancelar</button>
+              <button ref={importConfirm} className="primary-small" onClick={() => void importBoard(pendingImport)}>Importar e substituir</button>
+            </div>
+          </div>
         </div>
       )}
       <input
@@ -276,7 +339,8 @@ export default function App() {
         accept=".json"
         hidden
         onChange={(e) => {
-          void importBoard(e.target.files?.[0]);
+          const file = e.target.files?.[0];
+          if (file) setPendingImport(file);
           e.target.value = "";
         }}
       />
