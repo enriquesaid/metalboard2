@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260924T001113247Z-48953-96e37cd6abcf",
+  "runId": "20260924T001113247Z-48953-96e37cd6abcf",
+  "runStatus": "completed",
+  "coverage": {
+    "status": "complete",
+    "reasons": []
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "80136311baed1ce60634702bc10fada8dc295c0c",
+  "diffHash": "64d1cbf339dd9ab484fe20fc736bf4701374b3b401af992d9fe844ff69199c6e",
+  "rulesVersion": "unavailable",
+  "sessionHash": "fb6a987626a10adbb6600fd7a78c265e60e85c25008e2fa25ec6f084644f9a39",
+  "reportRef": ".mimosa/reports/task-review-sess_c325e3c3-76b0-4b1e-a5d7-687d46afa7c3-20260924T001113247Z-48953-96e37cd6abcf.json",
+  "events": [],
+  "observedFindingIds": [],
+  "verifiedFiles": [
+    {
+      "file": "src/shapes.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/dataflow/edges.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/dataflow/edges-overlay.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "src/App.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    }
+  ],
+  "recordedAt": "2026-09-24T00:11:13.498Z"
+}

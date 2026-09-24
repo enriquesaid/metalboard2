@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "mimosa-hook-status/v1",
+  "recordedAt": "2026-09-24T10:20:46.037Z",
+  "sessionId": "sess_c325e3c3-76b0-4b1e-a5d7-687d46afa7c3",
+  "event": "PostToolUse",
+  "toolName": "Edit",
+  "file": "/Users/sassa/.zcode/cli/memories/projects/metalboard2-03cfacded81b7818/memory/tldraw-5-4-2-quirks.md",
+  "outcome": "clear",
+  "coverage": "complete",
+  "findingCount": 0,
+  "durationMs": 3,
+  "hostState": "hook_complete",
+  "reportHint": ".mimosa/reports/"
+}

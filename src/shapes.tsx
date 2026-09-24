@@ -6,7 +6,10 @@ import {
   T,
   type TLBaseShape,
   useEditor,
+  useValue,
 } from "tldraw";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 import {
   AppWindow,
   Check,
@@ -43,6 +46,19 @@ declare module "tldraw" {
   interface TLGlobalShapePropsMap {
     block: BlockShape["props"];
   }
+}
+marked.setOptions({ gfm: true, breaks: true, async: false });
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (node.tagName === "A") {
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
+// Notas renderizam markdown do conteúdo já resolvido pelo dataflow — valores
+// vindos de fetch/embed chegam aqui, então sanitizar antes do innerHTML é
+// obrigatório.
+function renderNoteMarkdown(source: string): string {
+  return DOMPurify.sanitize(marked.parse(source) as string);
 }
 export class BlockUtil extends BaseBoxShapeUtil<BlockShape> {
   static override type = "block" as const;
@@ -84,6 +100,9 @@ export class BlockUtil extends BaseBoxShapeUtil<BlockShape> {
     return path;
   }
   override canEdit() {
+    // O estado de edição do tldraw (duplo clique / Enter) controla a renomeação
+    // do título. Com false, o duplo clique cairia no fallback que cria um shape
+    // de texto vazio por cima do bloco.
     return true;
   }
   override canCull() {
@@ -96,8 +115,27 @@ function Block({ shape }: { shape: BlockShape }) {
   const data = useDataResolver();
   const [noteFocused, setNoteFocused] = useState(false);
   const [pending, setPending] = useState<{command: string; cwd: string} | null>(null);
+  const titleDraft = useRef("");
+  const titleInput = useRef<HTMLInputElement>(null);
+  const titleEditing = useValue(
+    "title editing",
+    () => editor.getEditingShapeId() === shape.id,
+    [editor, shape.id],
+  );
   const resolvedContent = data.attempt(() => data.text(shape, p.content));
   const contentText = resolvedContent.ok ? display(resolvedContent.value) : `⚠ ${resolvedContent.error}`;
+  const noteHtml = useMemo(
+    () => (p.kind === "idea" && resolvedContent.ok ? renderNoteMarkdown(contentText) : ""),
+    [p.kind, resolvedContent.ok, contentText],
+  );
+  const noteArea = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!noteFocused) return;
+    // mesmo rAF do título: focar durante o pointerdown que abriu a edição
+    // deixa a ação padrão do clique roubar o foco de volta
+    const frame = requestAnimationFrame(() => noteArea.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [noteFocused]);
   const [editing, setEditing] = useState(false),
     [confirm, setConfirm] = useState(false),
     [running, setRunning] = useState(false);
@@ -108,6 +146,34 @@ function Block({ shape }: { shape: BlockShape }) {
     [copied, setCopied] = useState(false);
   const activeRun = useRef<null | { write: (input: string) => Promise<unknown>; cancel: () => Promise<void> }>(null);
   const mounted = useRef(true);
+  useEffect(() => {
+    if (titleEditing) titleDraft.current = p.title;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titleEditing]);
+  useEffect(() => {
+    if (!titleEditing) return;
+    const el = titleInput.current;
+    if (!el) return;
+    // O foco precisa esperar o clique que abriu a edição terminar de despachar:
+    // focar durante o evento faz a ação padrão (focar o canvas) roubar o foco
+    // de volta, o blur encerra a edição no mesmo instante em que ela abre.
+    const frame = requestAnimationFrame(() => {
+      el.focus();
+      el.select();
+    });
+    // O Escape precisa ser tratado no próprio input: o listener do container do
+    // tldraw chama editor.cancel() durante a fase de bubble e desmonta o input
+    // antes de o React processar o onKeyDown (perderíamos a reversão do título).
+    const revert = (e: KeyboardEvent) => {
+      if (e.key === "Escape") update({ title: titleDraft.current });
+    };
+    el.addEventListener("keydown", revert);
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("keydown", revert);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titleEditing]);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -191,6 +257,17 @@ function Block({ shape }: { shape: BlockShape }) {
     if (!activeRun.current || !p.content.trim()) return;
     void activeRun.current.write(`${p.content}\n`).then(() => update({ content: "" })).catch((e) => setResult(String(e)));
   }
+  function copyContent() {
+    const result = data.result(shape);
+    const text = result.ok ? display(result.value) : p.content;
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => setResult("Não foi possível copiar."));
+  }
   const icon =
     p.kind === "fetch" ? <Globe size={14} /> : p.kind === "embed" ? (
       <AppWindow size={14} />
@@ -210,12 +287,26 @@ function Block({ shape }: { shape: BlockShape }) {
     >
       <div className="block-header">
         <span className="block-symbol">{icon}</span>
-        <input
-          aria-label="Título do bloco"
-          value={p.title}
-          onPointerDown={(e) => e.stopPropagation()}
-          onChange={(e) => update({ title: e.target.value })}
-        />
+        {titleEditing ? (
+          <input
+            aria-label="Título do bloco"
+            ref={titleInput}
+            value={p.title}
+            onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                editor.setEditingShape(null);
+              }
+            }}
+            onBlur={() => editor.setEditingShape(null)}
+            onChange={(e) => update({ title: e.target.value })}
+          />
+        ) : (
+          <span className="block-title" title="Arraste para mover · duplo clique para renomear">
+            {p.title}
+          </span>
+        )}
         <span className="block-tag">
           {p.kind === "code"
             ? p.language.toUpperCase()
@@ -227,6 +318,14 @@ function Block({ shape }: { shape: BlockShape }) {
                   ? "SNAPSHOT"
                   : p.kind === "fetch" ? "REST" : p.kind === "embed" ? "WEB" : "NOTA"}
         </span>
+        <button
+          className="block-copy"
+          title="Copiar conteúdo do bloco"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={copyContent}
+        >
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+        </button>
       </div>
       <div
         className="block-body"
@@ -237,17 +336,31 @@ function Block({ shape }: { shape: BlockShape }) {
         {p.kind === 'fetch' && <FetchBlock shape={shape} />}
         {p.kind === 'embed' && <EmbedBlock shape={shape} />}
         {p.kind === "mermaid" && <MermaidBlock shape={shape} />}
-        {p.kind === "idea" && (
-          <textarea
-            aria-label="Conteúdo da ideia"
-            className="note-input"
-            value={noteFocused ? p.content : contentText}
-            onFocus={() => setNoteFocused(true)}
-            onBlur={() => setNoteFocused(false)}
-            onChange={(e) => update({ content: e.target.value })}
-            placeholder="Uma ideia começa aqui…"
-          />
-        )}
+        {p.kind === "idea" &&
+          (noteFocused || !contentText.trim() ? (
+            <textarea
+              ref={noteArea}
+              aria-label="Conteúdo da ideia"
+              className="note-input"
+              value={p.content}
+              onFocus={() => setNoteFocused(true)}
+              onBlur={() => setNoteFocused(false)}
+              onChange={(e) => update({ content: e.target.value })}
+              placeholder={"Uma ideia começa aqui… · markdown suportado"}
+            />
+          ) : resolvedContent.ok ? (
+            <div
+              className="note-markdown"
+              role="button"
+              aria-label="Editar ideia"
+              onPointerDown={(e) => {
+                if (e.button === 0) setNoteFocused(true);
+              }}
+              dangerouslySetInnerHTML={{ __html: noteHtml }}
+            />
+          ) : (
+            <div className="note-markdown note-error">{contentText}</div>
+          ))}
         {p.kind === "terminal" && (
           <>
             <div className="terminal-path">

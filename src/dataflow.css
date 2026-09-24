@@ -1,5 +1,41 @@
 /* Hallmark · app-scope repair · dataflow overlay + panel (tokens.css) */
 /* --data-overlay sits left of tldraw's top-right style panel; the 174px inset tracks it */
+
+/* Setas de fluxo de dados: pontilhado caminha do produtor ao consumidor */
+.dataflow-edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.dataflow-edge {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 60%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 9;
+  animation: dataflow-march 1.15s linear infinite;
+}
+#dataflow-arrowhead path {
+  fill: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.dataflow-pulse {
+  fill: var(--accent-strong);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent-strong) 85%, transparent));
+}
+@keyframes dataflow-march {
+  to {
+    stroke-dashoffset: -9.1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dataflow-edge {
+    animation: none;
+  }
+}
+
 .data-overlay {
   position: absolute;
   top: 58px;

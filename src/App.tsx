@@ -15,11 +15,21 @@ import { BlockUtil, type BlockShape } from "./shapes";
 import { exampleSource } from "./preview";
 import { MetalboardToolbar } from "./MetalboardToolbar";
 import { DataPanel } from "./DataPanel";
+import { DataFlowEdges } from "./dataflow/edges-overlay";
 import { installElementIds } from "./dataflow/editor";
 import { DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil } from "./dataflow/native-shapes";
+import { installScrollThrough } from "./scrollable";
 import { shapeHasMermaidText, selectionToMermaid } from "./mermaid-canvas";
 const shapeUtils = [BlockUtil, DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil];
-const components = { Toolbar: MetalboardToolbar, InFrontOfTheCanvas: DataPanel };
+const components = {
+  Toolbar: MetalboardToolbar,
+  InFrontOfTheCanvas: () => (
+    <>
+      <DataFlowEdges />
+      <DataPanel />
+    </>
+  ),
+};
 export default function App() {
   const [editor, setEditor] = useState<Editor>(),
     [message, setMessage] = useState(""),
@@ -28,6 +38,7 @@ export default function App() {
     );
   const input = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState({ zoom: 100, selected: 0, mermaidable: false });
+  useEffect(() => installScrollThrough(), []);
   useEffect(() => {
     if (!editor) return;
     const update = () => {
