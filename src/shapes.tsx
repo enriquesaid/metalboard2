@@ -27,8 +27,9 @@ import { buildPreview } from "./preview";
 import { desktopAvailable, startTerminal } from "./runtime";
 import { FetchBlock } from "./FetchBlock";
 import { EmbedBlock } from "./EmbedBlock";
+import { MarkdownDoc } from "./MarkdownDoc";
 import { useDataResolver, updateMeta } from "./dataflow/editor";
-import { config, display } from "./dataflow/core";
+import { config, display, unescapeMarkdown } from "./dataflow/core";
 export type BlockShape = TLBaseShape<
   "block",
   {
@@ -54,6 +55,10 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
     node.setAttribute("rel", "noopener noreferrer");
   }
 });
+// Mesma gramática de referência do dataflow (dataflow/core.ts): um documento
+// com %refs% mostra o conteúdo resolvido quando fora de foco e a fonte crua
+// dentro do editor.
+const noteRefPattern = /%([A-Za-z0-9_-]+)((?:\.[\w-]+|\[\d+\])*)%/;
 // Notas renderizam markdown do conteúdo já resolvido pelo dataflow — valores
 // vindos de fetch/embed chegam aqui, então sanitizar antes do innerHTML é
 // obrigatório.
@@ -77,7 +82,7 @@ export class BlockUtil extends BaseBoxShapeUtil<BlockShape> {
       w: 400,
       h: 300,
       kind: "idea",
-      title: "Nova ideia",
+      title: "Novo documento",
       content: "",
       language: "tsx",
       cwd: "",
@@ -114,6 +119,8 @@ function Block({ shape }: { shape: BlockShape }) {
     p = shape.props;
   const data = useDataResolver();
   const [noteFocused, setNoteFocused] = useState(false);
+  const [docFocus, setDocFocus] = useState(0);
+  const readonly = useValue("readonly", () => editor.getIsReadonly(), [editor]);
   const [pending, setPending] = useState<{command: string; cwd: string} | null>(null);
   const titleDraft = useRef("");
   const titleInput = useRef<HTMLInputElement>(null);
@@ -122,24 +129,19 @@ function Block({ shape }: { shape: BlockShape }) {
     () => editor.getEditingShapeId() === shape.id,
     [editor, shape.id],
   );
-  const resolvedContent = data.attempt(() => data.text(shape, p.content));
+  const unescapedContent = unescapeMarkdown(p.content);
+  const resolvedContent = data.attempt(() => data.text(shape, unescapedContent));
   const contentText = resolvedContent.ok ? display(resolvedContent.value) : `⚠ ${resolvedContent.error}`;
   const noteHtml = useMemo(
     () => (p.kind === "idea" && resolvedContent.ok ? renderNoteMarkdown(contentText) : ""),
     [p.kind, resolvedContent.ok, contentText],
   );
-  const noteArea = useRef<HTMLTextAreaElement>(null);
+  const hasRefs = noteRefPattern.test(unescapedContent);
   const confirmButton = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!noteFocused) return;
-    // mesmo rAF do título: focar durante o pointerdown que abriu a edição
-    // deixa a ação padrão do clique roubar o foco de volta
-    const frame = requestAnimationFrame(() => noteArea.current?.focus());
-    return () => cancelAnimationFrame(frame);
-  }, [noteFocused]);
   const [editing, setEditing] = useState(false),
     [confirm, setConfirm] = useState(false),
     [running, setRunning] = useState(false);
+  const [refCopied, setRefCopied] = useState(false);
   useEffect(() => {
     if (!confirm) return;
     const frame = requestAnimationFrame(() => confirmButton.current?.focus());
@@ -263,6 +265,39 @@ function Block({ shape }: { shape: BlockShape }) {
     if (!activeRun.current || !p.content.trim()) return;
     void activeRun.current.write(`${p.content}\n`).then(() => update({ content: "" })).catch((e) => setResult(String(e)));
   }
+  function openDoc() {
+    setNoteFocused(true);
+    setDocFocus((n) => n + 1);
+  }
+  function copyReference() {
+    void navigator.clipboard
+      .writeText(`%${config(shape).id}%`)
+      .then(() => {
+        setRefCopied(true);
+        setTimeout(() => setRefCopied(false), 1500);
+      })
+      .catch(() => {});
+  }
+  // O corpo do bloco deixa o pointerdown subir para o tldraw (arrastar por
+  // qualquer área), exceto quando o alvo é interativo — inputs, botões e o
+  // editor de documento precisam do evento para focar/sem arrastar o shape.
+  function bodyPointerDown(e: React.PointerEvent) {
+    let el = e.target instanceof HTMLElement ? e.target : null;
+    while (el && !el.classList.contains("block-body")) {
+      if (
+        el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.tagName === "SELECT" ||
+        el.tagName === "BUTTON" ||
+        el.isContentEditable ||
+        el.classList.contains("confirm-overlay")
+      ) {
+        e.stopPropagation();
+        return;
+      }
+      el = el.parentElement;
+    }
+  }
   function copyContent() {
     const result = data.result(shape);
     const text = result.ok ? display(result.value) : p.content;
@@ -322,7 +357,7 @@ function Block({ shape }: { shape: BlockShape }) {
                 ? "LOCAL"
                 : p.kind === "output"
                   ? "SNAPSHOT"
-                  : p.kind === "fetch" ? "REST" : p.kind === "embed" ? "WEB" : "NOTA"}
+                  : p.kind === "fetch" ? "REST" : p.kind === "embed" ? "WEB" : "DOC"}
         </span>
         <button
           className="block-copy"
@@ -335,7 +370,7 @@ function Block({ shape }: { shape: BlockShape }) {
       </div>
       <div
         className="block-body"
-        onPointerDown={(e) => e.stopPropagation()}
+        onPointerDown={bodyPointerDown}
         onKeyDown={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
@@ -343,23 +378,25 @@ function Block({ shape }: { shape: BlockShape }) {
         {p.kind === 'embed' && <EmbedBlock shape={shape} />}
         {p.kind === "mermaid" && <MermaidBlock shape={shape} />}
         {p.kind === "idea" &&
-          (noteFocused || !contentText.trim() ? (
-            <textarea
-              ref={noteArea}
-              aria-label="Conteúdo da ideia"
-              className="note-input"
+          (!readonly && (!hasRefs || noteFocused) ? (
+            <MarkdownDoc
               value={p.content}
-              onFocus={() => setNoteFocused(true)}
-              onBlur={() => setNoteFocused(false)}
-              onChange={(e) => update({ content: e.target.value })}
-              placeholder={"Uma ideia começa aqui… · markdown suportado"}
+              onChange={(markdown) => update({ content: markdown })}
+              onFocusChange={setNoteFocused}
+              focusSignal={docFocus}
+              placeholder="Escreva o documento… markdown suportado"
+              ariaLabel="Conteúdo do documento"
             />
           ) : resolvedContent.ok ? (
             <>
-              <button className="note-edit" type="button" onClick={() => setNoteFocused(true)}>Editar ideia</button>
+              {!readonly && (
+                <button className="note-edit" type="button" onClick={openDoc}>
+                  Editar documento
+                </button>
+              )}
               <div
                 className="note-markdown"
-                onDoubleClick={() => setNoteFocused(true)}
+                onDoubleClick={!readonly ? openDoc : undefined}
                 dangerouslySetInnerHTML={{ __html: noteHtml }}
               />
             </>
@@ -568,7 +605,18 @@ function Block({ shape }: { shape: BlockShape }) {
           </>
         )}
       </div>
-      {!['fetch', 'embed'].includes(p.kind) && <div className="element-reference" title="Configure no painel Dados do elemento">%{config(shape).id}%</div>}
+      {!['fetch', 'embed'].includes(p.kind) && (
+        <button
+          type="button"
+          className="element-reference"
+          title="Copiar a referência deste elemento para colar em outro"
+          aria-label={`Copiar referência %${config(shape).id}%`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={copyReference}
+        >
+          {refCopied ? <>%{config(shape).id}% <Check size={11} /> copiada</> : `%${config(shape).id}%`}
+        </button>
+      )}
     </HTMLContainer>
   );
 }

@@ -11,6 +11,10 @@ pub struct Response { status: u16, status_text: String, headers: HashMap<String,
 async fn send(request: Request) -> Result<Response,String> {
     let url = reqwest::Url::parse(&request.url).map_err(|e| e.to_string())?;
     if !["http", "https"].contains(&url.scheme()) || !url.username().is_empty() || url.password().is_some() { return Err("URL HTTP/HTTPS inválida".into()); }
+    // Mesma política de rede interna do scraper de embed: o Fetch nunca fala
+    // com localhost/redes privadas (checa IP literal e os IPs resolvidos por
+    // DNS, fechando rebinding entre a checagem e a requisição).
+    crate::scrape::validate_host(&url).await?;
     if !(100..=120000).contains(&request.timeout_ms) { return Err("Timeout inválido".into()); }
     if !["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"].contains(&request.method.as_str()) { return Err("Método inválido".into()); }
     if request.body.as_ref().is_some_and(|b| b.len() > 2_000_000) { return Err("Body excede 2 MB".into()); }

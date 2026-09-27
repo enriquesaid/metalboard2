@@ -1,6 +1,6 @@
 // Grafo de dependências: quais elementos consomem quais via referências %id%.
 // Puro (sem React/tldraw) para rodar em testes node — a parte visual fica em edges-overlay.tsx.
-import { config, type DataShape } from './core';
+import { config, unescapeMarkdown, type DataShape } from './core';
 
 const referencePattern = /%([A-Za-z0-9_-]+)((?:\.[\w-]+|\[\d+\])*)%/g;
 const reservedTokens = new Set(['input', 'value']);
@@ -12,7 +12,9 @@ const displayOnlyProps = new Set(['title', 'origin']);
 
 export function references(value: unknown, found: Set<string> = new Set(), skip?: Set<string>): Set<string> {
   if (typeof value === 'string') {
-    for (const match of value.matchAll(referencePattern)) found.add(match[1]);
+    // Desscapear antes de casar: o editor de documentos grava %element\_3% e o
+    // resolver interpola o texto sem escapes — o scanner precisa ver o mesmo.
+    for (const match of unescapeMarkdown(value).matchAll(referencePattern)) found.add(match[1]);
   } else if (Array.isArray(value)) {
     for (const item of value) references(item, found, skip);
   } else if (value && typeof value === 'object') {

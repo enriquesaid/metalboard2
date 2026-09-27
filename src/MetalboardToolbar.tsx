@@ -4,7 +4,7 @@ import { type BlockShape } from "./shapes";
 import { exampleSource } from "./preview";
 
 const blocks = [
-  { kind: "idea", label: "Ideia", title: "Nova ideia", icon: FileText },
+  { kind: "idea", label: "Documento", title: "Novo documento", icon: FileText },
   { kind: "terminal", label: "Terminal", title: "Terminal", icon: Terminal },
   { kind: "code", label: "Componente", title: "Novo componente", icon: Code2 },
   { kind: "fetch", label: "Fetch", title: "Fetch", icon: Globe },

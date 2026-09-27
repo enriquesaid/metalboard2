@@ -10,6 +10,15 @@ test('references coleta aliases em strings aninhadas de arrays e objetos', () =>
   assert.deepEqual([...references({ a:'x %element_1% y', list:['%element_2.name%', { b:'%input%' }], n: 42 })].sort(), ['element_1','element_2','input']);
 });
 
+test('references desscapeia markdown do editor de documentos (%element\\_3%)', () => {
+  // O Milkdown grava underscores e outros sinais escapados: %element\_3%.
+  assert.deepEqual([...references('Resultado: %element\\_3% e %element\\_4.path%')].sort(), ['element_3','element_4']);
+  const produtor = block('element_3', 'pwd'), consumidor = block('element_9', 'Resultado: %element\\_3%');
+  assert.deepEqual(dependencyEdges([produtor, consumidor]), [
+    { source:'shape:element_3', consumer:'shape:element_9', refs:['element_3'] },
+  ]);
+});
+
 test('referencesOf cobre props, metalboard, fetch e embed; ignora título/origin e resultados de execução', () => {
   const s = shape('x',
     { kind:'fetch', content:'cmd %element_1%', richText:{ type:'doc', content:[{ type:'text', text:'%element_2[0]%' }] } },

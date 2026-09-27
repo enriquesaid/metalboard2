@@ -69,10 +69,11 @@ pub fn normalize_url(source: &str) -> Result<reqwest::Url, String> {
 
 /// Valida o host antes de qualquer requisição: IP literal checado direto;
 /// nome é resolvido por DNS e qualquer endereço privado/reservado rejeita.
-async fn validate_host(url: &reqwest::Url) -> Result<(), String> {
+/// Usada também pelo http_fetch (Fetch block), além do scraper de embed.
+pub(crate) async fn validate_host(url: &reqwest::Url) -> Result<(), String> {
     let host = url.host_str().ok_or("URL sem host.")?;
     if hostname_disallowed(host) {
-        return Err("Host não permitido: localhost é bloqueado na extração.".into());
+        return Err("Host não permitido: localhost é bloqueado.".into());
     }
     let literal = host.trim_start_matches('[').trim_end_matches(']');
     if let Ok(ip) = literal.parse::<IpAddr>() {

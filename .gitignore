@@ -6,3 +6,4 @@ src-tauri/target/
 src/generated/
 *.tsbuildinfo
 src-tauri/gen/
+.mimosa

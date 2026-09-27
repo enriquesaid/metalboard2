@@ -27,6 +27,13 @@ export function selectPath(value: unknown, path: string): unknown {
   return value;
 }
 const pattern = /%([A-Za-z0-9_-]+)((?:\.[\w-]+|\[\d+\])*)%/g;
+// O serializer do Milkdown (editor de documentos) escapa a pontuação de markdown
+// (\_, \* …). Toda interpolação e varredura de referências precisa do texto sem
+// escapes para casar com o padrão %id%.
+export const markdownEscapes = /\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g;
+export function unescapeMarkdown(text: string): string {
+  return text.replace(markdownEscapes, "$1");
+}
 export type Result = { ok: true; value: unknown } | { ok: false; error: string };
 export function resolver(shapes: DataShape[], asset?: (id: string) => unknown) {
   const byAlias = new Map<string, DataShape>();
@@ -34,6 +41,7 @@ export function resolver(shapes: DataShape[], asset?: (id: string) => unknown) {
   for (const shape of shapes) { const id = config(shape).id; if (byAlias.has(id)) duplicates.add(id); byAlias.set(id, shape); }
   const cache = new Map<string, unknown>();
   function interpolate(source: string, stack: string[] = [], locals: Record<string, unknown> = {}): unknown {
+    const src = unescapeMarkdown(source);
     const read = (id: string, path: string) => {
       if (Object.hasOwn(locals, id)) return selectPath(locals[id], path);
       if (duplicates.has(id)) throw new Error(`ID duplicado: ${id}`);
@@ -41,9 +49,9 @@ export function resolver(shapes: DataShape[], asset?: (id: string) => unknown) {
       if (!target) throw new Error(`Elemento não encontrado: ${id}`);
       return selectPath(output(target, stack), path);
     };
-    const matches = [...source.matchAll(pattern)];
-    if (matches.length === 1 && matches[0][0] === source) return read(matches[0][1], matches[0][2]);
-    return source.replace(pattern, (_, id, path) => display(read(id, path)));
+    const matches = [...src.matchAll(pattern)];
+    if (matches.length === 1 && matches[0][0] === src) return read(matches[0][1], matches[0][2]);
+    return src.replace(pattern, (_, id, path) => display(read(id, path)));
   }
   function resolveTree(value: unknown, stack: string[], locals: Record<string, unknown> = {}): unknown {
     if (typeof value === 'string') return interpolate(value, stack, locals);

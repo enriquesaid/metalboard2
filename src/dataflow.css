@@ -204,12 +204,19 @@
   padding: 8px 0;
 }
 .element-reference {
+  width: 100%;
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   color: var(--ink-3);
   padding: 5px 13px;
   border-top: 1px solid color-mix(in srgb, var(--line-3) 50%, transparent);
+  border-radius: 0;
   flex-shrink: 0;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.element-reference:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
 .block-idea .element-reference {
   color: var(--idea-ink-2);
