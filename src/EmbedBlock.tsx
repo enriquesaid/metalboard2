@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useEditor } from 'tldraw';
 import { invoke } from '@tauri-apps/api/core';
 import { ExternalLink, Globe, Play } from 'lucide-react';
@@ -14,11 +14,9 @@ export function EmbedBlock({ shape }: { shape: BlockShape }) {
   const editor = useEditor(), data = useDataResolver();
   const settings = { ...defaultEmbed, ...(shape.meta.embed as Partial<EmbedConfig>) };
   const [tab, setTab] = useState('page'), [error, setError] = useState(''), [running, setRunning] = useState(false);
-  const active = useRef<AbortController | null>(null);
   const saved = shape.meta.scrape as ScrapeMeta | undefined;
   const execution = shape.meta.execution as { status: string; error?: string } | undefined;
   const patch = (change: Partial<EmbedConfig>) => updateMeta(editor, shape.id, { embed: { ...settings, ...change }, execution: { status: 'stale', error: 'Formato alterado. Extraia novamente.' } });
-  useEffect(() => () => { active.current?.abort('Extração cancelada.'); }, []);
   function load() {
     try {
       const url = parseEmbedUrl(display(data.text(shape, shape.props.content)));
@@ -26,34 +24,15 @@ export function EmbedBlock({ shape }: { shape: BlockShape }) {
       setError('');
     } catch (e) { setError(String(e)); }
   }
-  async function browserScrape(url: string, controller: AbortController): Promise<ScrapePayload> {
-    const timer = setTimeout(() => controller.abort('Tempo limite excedido.'), 30_000);
-    const start = performance.now();
-    try {
-      const response = await fetch(url, { redirect: 'follow', credentials: 'omit', signal: controller.signal });
-      const reader = response.body?.getReader();
-      let body = '', count = 0;
-      const decoder = new TextDecoder();
-      if (reader) while (true) { const { value, done } = await reader.read(); if (done) break; count += value.byteLength; if (count > 2_000_000) { await reader.cancel(); throw new Error('Página excede o limite de 2 MB.'); } body += decoder.decode(value, { stream: true }); }
-      body += decoder.decode();
-      return { url: response.url || url, status: response.status, contentType: response.headers.get('content-type') || '', body, durationMs: Math.round(performance.now() - start), warnings: [] };
-    } catch (e) {
-      if (controller.signal.aborted) throw new Error(typeof controller.signal.reason === 'string' ? controller.signal.reason : 'Extração cancelada.');
-      if (e instanceof TypeError) throw new Error('Falha de rede ou CORS. No desktop, a extração usa o transporte nativo, sem restrição de CORS.');
-      throw e;
-    } finally { clearTimeout(timer); }
-  }
   async function extract() {
     setError('');
+    // A política SSRF depende de resolução de DNS, que só o transporte nativo faz.
+    if (!desktopAvailable) { setError('Abra o Metalboard desktop para extrair dados da página.'); return; }
     let target: URL;
     try { target = parseEmbedUrl(display(data.text(shape, shape.props.content))); } catch (e) { setError(String(e)); return; }
-    const controller = new AbortController();
-    active.current = controller;
     setRunning(true); updateMeta(editor, shape.id, { execution: { status: 'running' } });
     try {
-      const payload = desktopAvailable
-        ? await invoke<ScrapePayload>('scrape_page', { url: target.toString(), timeoutMs: 30_000 })
-        : await browserScrape(target.toString(), controller);
+      const payload = await invoke<ScrapePayload>('scrape_page', { url: target.toString(), timeoutMs: 30_000 });
       const { value, warnings } = runScrape(payload, settings.format);
       const ok = payload.status >= 200 && payload.status < 300;
       updateMeta(editor, shape.id, {
@@ -65,7 +44,7 @@ export function EmbedBlock({ shape }: { shape: BlockShape }) {
       if (!ok) setError(`HTTP ${payload.status}. Consulte o conteúdo recebido.`);
       setTab('output');
     } catch (e) { const message = String(e); setError(message); updateMeta(editor, shape.id, { execution: { status: 'error', error: message } }); }
-    finally { active.current = null; setRunning(false); }
+    finally { setRunning(false); }
   }
   const result = data.result(shape);
   return <div className="fetch-content embed-content">
@@ -84,8 +63,8 @@ export function EmbedBlock({ shape }: { shape: BlockShape }) {
     {tab === 'output' && <div className="fetch-editor">
       <fieldset disabled={running}>
         <label>Formato do output<select aria-label="Formato do output" value={settings.format} onChange={e => patch({ format: e.target.value as ScrapeFormat })}><option value="markdown">Markdown da página</option><option value="json">Relatório JSON</option></select></label>
-        <button className="ui-action ui-action--primary embed-extract" disabled={!shape.props.content.trim()} aria-busy={running} onClick={() => void extract()}><Play size={12} />{running ? 'Extraindo…' : 'Extrair dados da página'}</button>
-        <p>Referência: <code>%{config(shape).id}%</code>. A extração busca o HTML {desktopAvailable ? 'pelo transporte nativo (sem CORS)' : 'pelo navegador (sujeita a CORS)'} e gera o output no formato escolhido. Caminhos, mapeamento e template podem ser ajustados no painel Dados do elemento.</p>
+        <button className="ui-action ui-action--primary embed-extract" disabled={!shape.props.content.trim() || !desktopAvailable} title={desktopAvailable ? undefined : 'Abra o Metalboard desktop para extrair'} aria-busy={running} onClick={() => void extract()}><Play size={12} />{running ? 'Extraindo…' : 'Extrair dados da página'}</button>
+        <p>Referência: <code>%{config(shape).id}%</code>. A extração busca o HTML pelo transporte nativo (sem CORS) e gera o output no formato escolhido. Caminhos, mapeamento e template podem ser ajustados no painel Dados do elemento.</p>
       </fieldset>
       {saved && <div className="http-status">HTTP {saved.status} · {saved.durationMs} ms · {new Date(saved.completedAt).toLocaleString('pt-BR')} · {saved.contentType.split(';')[0] || 'sem content-type'}</div>}
       {saved?.warnings.length ? <div className="data-error">{saved.warnings.join(' ')}</div> : null}

@@ -53,6 +53,15 @@ function hostDisallowed(hostname: string): boolean {
   if (host.includes(':')) return ipv6Disallowed(host.replace(/^\[|\]$/g, ''));
   return false;
 }
+// Porta única de validação de destino. Os dois sinks de rede do navegador
+// (montagem em prepareRequest e execução em browserRequest) consomem o valor
+// que sai daqui — nunca a string original interpolada por %refs%.
+export function assertPublicUrl(source: string): URL {
+  const url = new URL(source);
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Use URL HTTP/HTTPS sem credenciais embutidas.');
+  if (hostDisallowed(url.hostname)) throw new Error('Use uma URL pública: localhost e redes privadas são bloqueados.');
+  return url;
+}
 export function prepareRequest(settings: FetchConfig, resolve: (s: string) => unknown, secrets: Secrets): PreparedRequest {
   const str = (s: string) => { const v = resolve(s); return typeof v === 'string' ? v : JSON.stringify(v); };
   let endpoint = str(settings.url);
@@ -61,9 +70,7 @@ export function prepareRequest(settings: FetchConfig, resolve: (s: string) => un
     endpoint = endpoint.replace(new RegExp(`\\{${key}\\}|:${key}(?=/|[?#]|$)`, 'g'), encodeURIComponent(str(pair.value)));
   }
   if (/\{[^}]+\}|\/[\:][\w]+/.test(endpoint)) throw new Error('Preencha todos os parâmetros da URL.');
-  const url = new URL(endpoint);
-  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Use URL HTTP/HTTPS sem credenciais embutidas.');
-  if (hostDisallowed(url.hostname)) throw new Error('Use uma URL pública: localhost e redes privadas são bloqueados.');
+  const url = assertPublicUrl(endpoint);
   for (const pair of settings.query.filter(p => p.enabled && p.key)) url.searchParams.append(str(pair.key), str(pair.value));
   const headers = new Headers();
   for (const pair of settings.headers.filter(p => p.enabled && p.key)) headers.set(str(pair.key), str(pair.value));
@@ -97,23 +104,4 @@ export function prepareRequest(settings: FetchConfig, resolve: (s: string) => un
   if (!['GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS'].includes(settings.method)) throw new Error('Método inválido.');
   if (settings.timeoutMs < 100 || settings.timeoutMs > 120000 || !Number.isFinite(settings.timeoutMs)) throw new Error('Timeout deve estar entre 100 e 120000 ms.');
   return { url: url.toString(), method: settings.method, headers: Object.fromEntries(headers), body, timeoutMs: settings.timeoutMs, credentials: settings.credentials };
-}
-export async function browserRequest(request: PreparedRequest, controller: AbortController): Promise<HttpResponse> {
-  // Revalida no sink: o destino final (após interpolação de %refs%) nunca
-  // pode apontar para a rede interna, mesmo que a origem do valor mude.
-  if (hostDisallowed(new URL(request.url).hostname)) throw new Error('Use uma URL pública: localhost e redes privadas são bloqueados.');
-  const timer = setTimeout(() => controller.abort('Tempo limite excedido.'), request.timeoutMs);
-  const start = performance.now();
-  try {
-    const response = await fetch(request.url, { method: request.method, headers: request.headers, body: request.body, credentials: request.credentials, redirect: 'error', signal: controller.signal });
-    const reader = response.body?.getReader(); let text = '', count = 0; const decoder = new TextDecoder();
-    if (reader) while (true) { const { value, done } = await reader.read(); if (done) break; count += value.byteLength; if (count > 2_000_000) { await reader.cancel(); throw new Error('Resposta excede o limite de 2 MB.'); } text += decoder.decode(value, { stream: true }); }
-    text += decoder.decode();
-    let body: unknown = text; try { body = JSON.parse(text); } catch { /* Text responses remain text. */ }
-    return { status: response.status, statusText: response.statusText, headers: Object.fromEntries(response.headers), body, durationMs: Math.round(performance.now() - start) };
-  } catch (e) {
-    if (controller.signal.aborted) throw new Error(typeof controller.signal.reason === 'string' ? controller.signal.reason : 'Requisição cancelada.');
-    if (e instanceof TypeError) throw new Error('Falha de rede, CORS ou redirecionamento. No desktop, use o transporte nativo para APIs sem CORS.');
-    throw e;
-  } finally { clearTimeout(timer); }
 }
