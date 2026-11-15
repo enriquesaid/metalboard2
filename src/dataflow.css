@@ -62,7 +62,7 @@
   padding: 9px 12px;
   border-radius: var(--r-md);
   font-size: var(--text-xs);
-  box-shadow: 0 3px 12px #0003;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--shadow) 20%, transparent);
   color: var(--ink-1);
 }
 .data-toggle:hover:not(:disabled),
@@ -79,7 +79,7 @@
   max-width: calc(100vw - 32px);
   overflow: auto;
   padding: 16px;
-  box-shadow: 0 10px 35px #0005;
+  box-shadow: 0 10px 35px color-mix(in srgb, var(--shadow) 33%, transparent);
   user-select: text;
 }
 .data-panel header {
@@ -314,7 +314,7 @@
   flex: 1;
   min-height: 0;
   border: 0;
-  background: #fff;
+  background: var(--paper-2);
 }
 .embed-empty {
   flex: 1;

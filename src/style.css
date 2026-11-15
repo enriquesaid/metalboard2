@@ -1,5 +1,5 @@
 /* Hallmark · pre-emit critique: P5 H5 E4 S5 R4 V4
- * app-scope redesign · genre: technical · structure: workbench · theme: sage on green-cast darks
+ * app-scope redesign · genre: technical · structure: workbench · theme: SPEC-01 hardware (see hardware.css)
  * type floor 10px · mono carries the identity · hover 120ms color-only · focus rings instant
  */
 :root {
@@ -302,7 +302,7 @@ footer > span {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in srgb, #000 52%, transparent);
+  background: color-mix(in srgb, var(--shadow) 52%, transparent);
 }
 .app-dialog {
   width: min(430px, 100%);
@@ -310,7 +310,7 @@ footer > span {
   border: 1px solid var(--line-3);
   border-radius: var(--r-lg);
   background: var(--paper-2);
-  box-shadow: 0 22px 70px #0008;
+  box-shadow: 0 22px 70px color-mix(in srgb, var(--shadow) 50%, transparent);
   color: var(--ink-1);
 }
 .app-dialog h2 { margin: 0 0 10px; font-size: var(--text-lg); }
@@ -321,7 +321,7 @@ footer > span {
   border: 1px solid var(--line-2);
   border-radius: var(--r-lg);
   background: var(--paper-2);
-  box-shadow: 0 8px 25px #0002;
+  box-shadow: 0 8px 25px color-mix(in srgb, var(--shadow) 13%, transparent);
   overflow: hidden;
   color: var(--ink-1);
   display: flex;

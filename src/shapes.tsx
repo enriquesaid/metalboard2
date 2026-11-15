@@ -508,12 +508,9 @@ function Block({ shape }: { shape: BlockShape }) {
         )}
         {p.kind === "output" && (
           <>
-            <div className="output-meta">
-              {p.origin || "Output fixado no canvas"}
-            </div>
             <pre className="saved-output">{contentText}</pre>
-            <div className="block-actions">
-              <span>Somente leitura</span>
+            <div className="block-actions output-actions">
+              <span className="output-origin" title={p.origin || "Output fixado no canvas"}>{p.origin || "Somente leitura"}</span>
               <button
                 onClick={() =>
                   void navigator.clipboard.writeText(p.content).then(() => {
@@ -630,7 +627,7 @@ function MermaidBlock({ shape }: { shape: BlockShape }) {
   const render = async (value: string) => {
     try {
       const mermaid = (await import("mermaid")).default;
-      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "neutral" });
+      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
       const result = await mermaid.render(`metalboard-mermaid-${shape.id.replace(/[^a-zA-Z0-9]/g, "")}`, value);
       setSvg(result.svg);
       setError("");

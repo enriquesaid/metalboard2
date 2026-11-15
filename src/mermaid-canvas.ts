@@ -4,7 +4,8 @@
  * shapesToMermaid consome. (O inverso do botão "Transformar no canvas" do bloco
  * Mermaid, que usa createMermaidDiagram do @tldraw/mermaid.)
  */
-import { Mat, type Editor, type TLShape, type TLShapeId } from "tldraw";
+import { Mat, createShapeId, type Editor, type TLShape, type TLShapeId } from "tldraw";
+import type { BlockShape } from "./shapes";
 import { plainTextFromRichText, shapesToMermaid, type MermaidShapeInput } from "./mermaid-export";
 
 export const MERMAID_NODE_TYPES = new Set(["block", "geo", "note", "text"]);
@@ -85,4 +86,34 @@ export function selectionToMermaid(editor: Editor): string {
     }
   }
   return shapesToMermaid(inputs);
+}
+
+/** Shared by the selection action and the desktop menu. */
+export function createMermaidFromSelection(editor: Editor): TLShapeId | null {
+  if (editor.getIsReadonly()) return null;
+  const source = selectionToMermaid(editor);
+  if (!source) return null;
+  const bounds = editor.getSelectionPageBounds() ?? editor.getViewportPageBounds();
+  let x = bounds.maxX + 60;
+  const occupied = editor.getCurrentPageShapes()
+    .map(shape => editor.getShapePageBounds(shape))
+    .filter(box => box !== undefined)
+    .sort((a, b) => a.x - b.x);
+  for (const box of occupied) {
+    if (x < box.maxX && x + 520 > box.x && bounds.y < box.maxY && bounds.y + 430 > box.y) {
+      x = box.maxX + 60;
+    }
+  }
+  const id = createShapeId();
+  editor.markHistoryStoppingPoint("create mermaid from selection");
+  editor.createShape<BlockShape>({
+    id,
+    type: "block",
+    x,
+    y: bounds.y,
+    props: { kind: "mermaid", title: "Diagrama da seleção", content: source, w: 520, h: 430 },
+  });
+  editor.select(id);
+  editor.zoomToSelection({ animation: { duration: 200 } });
+  return id;
 }

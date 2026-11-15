@@ -5,6 +5,7 @@ import "tldraw/tldraw.css";
 import "./tokens.css";
 import "./style.css";
 import "./dataflow.css";
+import "./hardware.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

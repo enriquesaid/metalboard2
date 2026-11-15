@@ -1,84 +1,147 @@
-/* Hallmark · app-scope repair · genre: technical
- * palette: sage accent on green-cast darks (one temperature) · type: system sans + ui-monospace
- * replaces 122 one-off hex values with named tokens; type floor 10px
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4
+ * SPEC-01 hardware adaptation · source: github.com/shuding/spec-01 (MIT)
+ * Local Spec Mono fonts retain the embedded SIL Open Font License notices.
  */
+
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 200;
+        font-display: swap;
+        src: url("/fonts/spec-mono-200-core.woff2") format("woff2");
+        unicode-range: U+0020-007E, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2026;
+      }
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 200;
+        font-display: swap;
+        src: url("/fonts/spec-mono-200-ext.woff2") format("woff2");
+        unicode-range: U+00A0-00B6, U+00B8-017F, U+2212;
+      }
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 300;
+        font-display: swap;
+        src: url("/fonts/spec-mono-300-core.woff2") format("woff2");
+        unicode-range: U+0020-007E, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2026;
+      }
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 300;
+        font-display: swap;
+        src: url("/fonts/spec-mono-300-ext.woff2") format("woff2");
+        unicode-range: U+00A0-00B6, U+00B8-017F, U+2212;
+      }
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("/fonts/spec-mono-400-core.woff2") format("woff2");
+        unicode-range: U+0020-007E, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2026;
+      }
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("/fonts/spec-mono-400-ext.woff2") format("woff2");
+        unicode-range: U+00A0-00B6, U+00B8-017F, U+2212;
+      }
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: url("/fonts/spec-mono-500-core.woff2") format("woff2");
+        unicode-range: U+0020-007E, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2026;
+      }
+      @font-face {
+        font-family: "Spec Mono";
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: url("/fonts/spec-mono-500-ext.woff2") format("woff2");
+        unicode-range: U+00A0-00B6, U+00B8-017F, U+2212;
+      }
+
 :root {
-  color-scheme: dark light;
-  /* paper — green-cast darks, single temperature */
-  --paper-0: #101211;
-  --paper-1: #141714;
-  --paper-2: #1a1e1a;
-  --paper-3: #212621;
-  --paper-input: #151a15;
-  --canvas: #121513;
-  /* lines */
-  --line-1: #262b26;
-  --line-2: #303630;
-  --line-3: #3c443c;
-  /* ink — ink-3 is the muted floor: 5.3:1 on paper-2 */
-  --ink-1: #e3e8e0;
-  --ink-2: #aab3a6;
-  --ink-3: #8b9484;
-  /* accent — one sage */
-  --accent: #c4dfa6;
-  --accent-strong: #d4eab8;
-  --accent-ink: #233018;
-  --accent-line: #46513a;
-  /* idea block — deliberate light inversion */
-  --idea-paper: #d9dfbd;
-  --idea-header: #ced6af;
-  --idea-ink: #303b29;
-  --idea-ink-2: #546442;
-  --idea-line: #b3bd92;
-  /* error */
-  --error-ink: #f0b199;
-  --error-bg: #321e1d;
-  --error-line: #74403b;
-  /* status */
-  --status-idle: #6a756a;
-  /* type — floor is 10px; nothing legible ships below it */
-  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+  --paper-0: #d9d9d6;
+  --paper-1: #e3e3e0;
+  --paper-2: #f3f3f1;
+  --paper-3: #e8e8e5;
+  --paper-input: #ececea;
+  --canvas: #eeeee9;
+  --line-1: #c6c6c1;
+  --line-2: #bfbfba;
+  --line-3: #a6a6a0;
+  --ink-1: #1d1d1c;
+  --ink-2: #4c4c47;
+  --ink-3: #62625c;
+  --accent: #ed5a28;
+  --accent-strong: #d84a19;
+  --accent-ink: #21130b;
+  --accent-line: #b34118;
+  --accent-text: #a33311;
+  --idea-paper: #d9dec9;
+  --idea-header: #d0d5bf;
+  --idea-ink: #292f20;
+  --idea-ink-2: #505840;
+  --idea-line: #a5ad90;
+  --error-ink: #9b3027;
+  --error-bg: #f5ddd6;
+  --error-line: #c28478;
+  --status-idle: #91918a;
+  --status-on: #3b784a;
+  --font-ui: "Spec Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --font-mono: var(--font-ui);
   --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 12px;
   --text-md: 16px;
   --text-lg: 21px;
-  /* shape */
-  --r-sm: 6px;
-  --r-md: 8px;
-  --r-lg: 12px;
-  /* motion — color/border only, never layout */
-  --dur-fast: 120ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  /* focus — ring shows instantly, never animated */
-  --focus-ring: var(--accent-strong);
-  --focus-ring-dark: #3d4d2b;
-  /* layers */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --dur-fast: 100ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --focus-ring: #96340f;
+  --focus-ring-dark: #96340f;
   --z-toast: 500;
-}
-@media (prefers-color-scheme: light) {
-  :root {
-    --paper-0: #eef1ec;
-    --paper-1: #f7f9f5;
-    --paper-2: #ffffff;
-    --paper-3: #e6ebe3;
-    --paper-input: #f8faf6;
-    --canvas: #e9eee7;
-    --line-1: #d7ddd3;
-    --line-2: #c7cec3;
-    --line-3: #aeb8aa;
-    --ink-1: #1c251b;
-    --ink-2: #4d5a4a;
-    --ink-3: #667363;
-    --accent: #526f36;
-    --accent-strong: #3d5e20;
-    --accent-ink: #f5faef;
-    --accent-line: #9cac8e;
-    --error-ink: #8c3227;
-    --error-bg: #fae8e4;
-    --error-line: #d29a91;
-    --status-idle: #788276;
-    --focus-ring: #486b28;
-  }
+  --key-top: #fafaf8;
+  --key-bottom: #e5e5e1;
+  --key-edge: #aaa9a2;
+  --highlight: #ffffff;
+  --shadow: #000000;
+  --charcoal: #2a2a29;
+  --charcoal-top: #41413e;
+  --charcoal-edge: #141413;
+  --on-charcoal: #efefea;
+  --lcd: #c4c7b8;
+  --lcd-top: #b7baad;
+  --lcd-ink: #30372a;
+  --lcd-dim: #414936;
+  --screen: #272d29;
+  --screen-ink: #d1ddbd;
+  --screen-muted: #a9b89c;
+  --screen-line: #4f594e;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --key-fill: linear-gradient(180deg, var(--key-top), var(--key-bottom));
+  --key-shadow: inset 0 1px 0 var(--highlight), 0 3px 0 var(--key-edge), 0 5px 7px -3px color-mix(in srgb, var(--shadow) 25%, transparent);
+  --key-pressed: inset 0 1px 0 var(--highlight), 0 1px 0 var(--key-edge);
+  --tool-size: 36px;
+  --tool-gap: 4px;
+  --tool-shadow: inset 0 1px 0 var(--highlight), 0 1px 0 var(--key-edge);
+  --panel-shadow: inset 0 1px 0 var(--highlight), 0 2px 0 var(--line-3), 0 8px 18px -10px color-mix(in srgb, var(--shadow) 40%, transparent);
+  --lcd-fill: linear-gradient(175deg, var(--lcd-top), var(--lcd) 65%);
+  --well-shadow: inset 0 1px 3px color-mix(in srgb, var(--shadow) 24%, transparent), 0 1px 0 var(--highlight);
 }

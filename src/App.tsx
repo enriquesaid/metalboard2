@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import {
   Tldraw,
-  createShapeId,
   type Editor,
   getSnapshot,
   loadSnapshot,
@@ -10,7 +9,11 @@ import {
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  GitBranch,
+  Grid2X2,
+  Scan,
+  Minus,
+  Plus,
+  PanelRight,
 } from "lucide-react";
 import { BlockUtil, type BlockShape } from "./shapes";
 import { exampleSource } from "./preview";
@@ -21,19 +24,33 @@ import { installElementIds } from "./dataflow/editor";
 import { DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil } from "./dataflow/native-shapes";
 import { installScrollThrough } from "./scrollable";
 import { desktopAvailable } from "./runtime";
-import { shapeHasMermaidText, selectionToMermaid } from "./mermaid-canvas";
+import { createMermaidFromSelection } from "./mermaid-canvas";
+import { SelectionActions } from "./SelectionActions";
+import { InspectorProvider, useInspector } from "./InspectorContext";
+import { EditorChrome, EditorFileActionsContext } from "./EditorChrome";
 const shapeUtils = [BlockUtil, DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil];
+const editorOptions = { actionShortcutsLocation: "menu" as const };
 const components = {
+  MenuPanel: null,
+  NavigationPanel: null,
+  QuickActions: null,
+  ActionsMenu: null,
   Toolbar: MetalboardToolbar,
   InFrontOfTheCanvas: () => (
     <>
       <DataFlowEdges />
       <DataPanel />
+      <SelectionActions />
+      <EditorChrome />
     </>
   ),
 };
 type ImportBackup = { name: string; snapshot: ReturnType<typeof getSnapshot> };
 export default function App() {
+  return <InspectorProvider><Workspace /></InspectorProvider>;
+}
+function Workspace() {
+  const { open: inspectorOpen, setOpen: setInspectorOpen } = useInspector();
   const [editor, setEditor] = useState<Editor>(),
     [message, setMessage] = useState(""),
     [name, setName] = useState(
@@ -43,24 +60,19 @@ export default function App() {
   const importConfirm = useRef<HTMLButtonElement>(null);
   const [pendingImport, setPendingImport] = useState<File>();
   const [importBackup, setImportBackup] = useState<ImportBackup>();
-  const [status, setStatus] = useState({ zoom: 100, selected: 0, mermaidable: false });
+  const [status, setStatus] = useState({ zoom: 100, selected: 0, grid: true, count: 0 });
   useEffect(() => installScrollThrough(), []);
   useEffect(() => {
     if (!editor) return;
     const update = () => {
       const zoom = Math.round(editor.getZoomLevel() * 100);
       const selected = editor.getSelectedShapeIds().length;
-      const mermaidable = (() => {
-        for (const id of editor.getShapeAndDescendantIds(editor.getSelectedShapeIds())) {
-          const shape = editor.getShape(id);
-          if (shape && shapeHasMermaidText(shape)) return true;
-        }
-        return false;
-      })();
+      const grid = editor.getInstanceState().isGridMode;
+      const count = editor.getCurrentPageShapes().length;
       setStatus((prev) =>
-        prev.zoom === zoom && prev.selected === selected && prev.mermaidable === mermaidable
+        prev.zoom === zoom && prev.selected === selected && prev.grid === grid && prev.count === count
           ? prev
-          : { zoom, selected, mermaidable },
+          : { zoom, selected, grid, count },
       );
     };
     const unsubscribe = editor.store.listen(() => update(), { scope: "all" });
@@ -74,7 +86,7 @@ export default function App() {
   function mount(e: Editor) {
     const cleanup = installElementIds(e);
     setEditor(e);
-    e.user.updateUserPreferences({ colorScheme: "system" });
+    e.user.updateUserPreferences({ colorScheme: "light" });
     e.updateInstanceState({ isGridMode: true });
     if (
       !e.getCurrentPageShapes().length &&
@@ -140,21 +152,10 @@ export default function App() {
   }
   function generateMermaid() {
     if (!editor) return;
-    const source = selectionToMermaid(editor);
-    if (!source) {
+    if (!createMermaidFromSelection(editor)) {
       notify("Selecione caixas, notas ou blocos — as setas ligadas entram junto");
       return;
     }
-    const bounds = editor.getSelectionPageBounds() ?? editor.getViewportPageBounds();
-    const id = createShapeId();
-    editor.createShape<BlockShape>({
-      id,
-      type: "block",
-      x: bounds.maxX + 60,
-      y: bounds.y,
-      props: { kind: "mermaid", title: "Diagrama da seleção", content: source, w: 520, h: 430 },
-    });
-    editor.select(id);
     notify("Mermaid gerado a partir da seleção");
   }
   function exportBoard() {
@@ -228,17 +229,21 @@ export default function App() {
       if (payload === "mermaid") generateMermaid();
     }).then((unlisten) => { if (cancelled) unlisten(); else dispose = unlisten; });
     return () => { cancelled = true; dispose?.(); };
-  }, [editor, name, status.mermaidable]);
+  }, [editor, name]);
   return (
-    <div className="app">
+    <EditorFileActionsContext.Provider value={{ importBoard: () => input.current?.click(), exportBoard }}>
+    <div className="app" data-skin="hardware">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark">m</span>metalboard
-          <span className="prototype">PROTÓTIPO</span>
+          <div id="editor-menu-host" className="editor-chrome editor-menu-host" />
+          <span className="brand-logo" role="img" aria-label="Metalboard">
+            <span className="brand-mark" aria-hidden="true" />
+            <span className="brand-wordmark" aria-hidden="true" />
+          </span>
         </div>
         <div className="workspace-name">
-          <span>/</span>
           <input
+            id="workspace-name"
             aria-label="Nome do workspace"
             value={name}
             onChange={(e) => {
@@ -248,36 +253,34 @@ export default function App() {
           />
           <span className="local-label">
             <i />
-            Local
+            LOCAL
           </span>
         </div>
+        <div id="editor-pages-host" className="editor-chrome editor-pages-host" />
+        <div id="editor-history-host" className="editor-chrome editor-history-host" />
         <div className="header-actions">
+          <button className="mobile-inspector-toggle" type="button" aria-label="Propriedades" aria-expanded={inspectorOpen} aria-controls="element-inspector" aria-keyshortcuts="Alt+P" title="Propriedades" onClick={() => setInspectorOpen(previous => !previous)}><PanelRight size={14} /></button>
           <button
-            className="export-button"
-            title="Converte as caixas e setas selecionadas em um bloco Mermaid"
-            disabled={!status.mermaidable}
-            onClick={generateMermaid}
-          >
-            <GitBranch size={14} />
-            <span className="btn-label">Gerar Mermaid</span>
-          </button>
-          <button
+            className="workspace-import"
+            aria-label="Importar board"
             title="Importar substitui o board atual; exporte para manter uma cópia"
             onClick={() => input.current?.click()}
           >
             <ArrowUpFromLine size={14} />
             <span className="btn-label">Importar</span>
           </button>
-          <button className="export-button" onClick={exportBoard}>
+          <button className="export-button export-button--primary workspace-export" aria-label="Exportar board" onClick={exportBoard}>
             <ArrowDownToLine size={14} />
             <span className="btn-label">Exportar board</span>
           </button>
         </div>
       </header>
-      <main>
+      <div id="editor-popups-host" className="editor-chrome workspace-popups" />
+      <main aria-label="Canvas do Metalboard">
         <div className="canvas-shell">
           <Tldraw
             components={components}
+            options={editorOptions}
             shapeUtils={shapeUtils}
             persistenceKey="metalboard-v1"
             onMount={mount}
@@ -288,15 +291,26 @@ export default function App() {
       <footer>
         <span>
           <span className="status-dot active" />
-          Salvo neste dispositivo
+          <span className="save-label-full">Salvo neste dispositivo</span>
+          <span className="save-label-compact">Salvo local</span>
         </span>
-        <span>
-          {status.zoom}%
-          <span className="footer-sep">/</span>
-          {status.selected === 0
-            ? "Nenhuma seleção"
-            : `${status.selected} selecionado${status.selected === 1 ? "" : "s"}`}
-        </span>
+        <span className="footer-instrument">{String(status.count).padStart(2, "0")} ELEMENTOS <span className="footer-sep">/</span> CANVAS INFINITO</span>
+        <div>
+          <span className="footer-selection">
+            {status.selected === 0
+              ? "Nenhuma seleção"
+              : `${status.selected} selecionado${status.selected === 1 ? "" : "s"}`}
+          </span>
+          <div className="board-controls" role="group" aria-label="Visualização do canvas">
+            <button aria-label="Alternar grade" title="Alternar grade" aria-pressed={status.grid} disabled={!editor} onClick={() => editor?.updateInstanceState({ isGridMode: !status.grid })}><Grid2X2 size={14} /><span>Grade</span></button>
+            <button aria-label="Enquadrar board" title="Enquadrar board" disabled={!editor} onClick={() => editor?.zoomToFit({ animation: { duration: 200 } })}><Scan size={14} /><span>Enquadrar</span></button>
+          </div>
+          <div className="zoom-controls" role="group" aria-label="Zoom do canvas">
+            <button aria-label="Diminuir zoom" disabled={!editor} onClick={() => editor?.zoomOut()}><Minus size={13} /></button>
+            <button className="zoom-readout" title="Restaurar zoom para 100%" aria-label={`Zoom ${status.zoom}%, restaurar para 100%`} disabled={!editor} onClick={() => editor?.resetZoom()}>{status.zoom}%</button>
+            <button aria-label="Aumentar zoom" disabled={!editor} onClick={() => editor?.zoomIn()}><Plus size={13} /></button>
+          </div>
+        </div>
       </footer>
       {message && (
         <div role="status" className="toast">
@@ -345,5 +359,6 @@ export default function App() {
         }}
       />
     </div>
+    </EditorFileActionsContext.Provider>
   );
 }

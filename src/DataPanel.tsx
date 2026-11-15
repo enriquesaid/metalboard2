@@ -1,12 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useEditor, useValue } from 'tldraw';
 import { ArrowRight, Braces, Copy, Database, SlidersHorizontal, X } from 'lucide-react';
 import { config, display, type OutputConfig } from './dataflow/core';
 import { allShapes, updateConfig, useDataResolver } from './dataflow/editor';
+import { useInspector } from './InspectorContext';
 
 export function DataPanel() {
   const editor = useEditor(), data = useDataResolver();
-  const [open, setOpen] = useState(false), [message, setMessage] = useState('');
+  const { open, setOpen } = useInspector();
+  const [message, setMessage] = useState('');
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (open) closeButton.current?.focus({ preventScroll: true });
+  }, [open]);
+  function close() {
+    setOpen(false);
+    const trigger = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-controls="element-inspector"]'))
+      .find(button => button.getClientRects().length > 0);
+    if (trigger) trigger.focus({ preventScroll: true });
+    else editor.focus();
+  }
   const shape = useValue('selected element', () => editor.getOnlySelectedShape(), [editor]);
   const readonly = useValue('read only', () => editor.getIsReadonly(), [editor]);
   const elements = useValue('element list', () => allShapes(editor), [editor]);
@@ -16,12 +30,12 @@ export function DataPanel() {
   const shapeTitle = shape ? String((shape.props as Record<string, unknown>).title || shape.type) : 'Nenhum elemento';
   const output = (change: Partial<OutputConfig>) => { if (shape && settings) updateConfig(editor, shape, { output: { ...settings.output, ...change } }); };
   const copy = (text: string) => void navigator.clipboard.writeText(text).then(() => setMessage('Referência copiada')).catch(() => setMessage('Não foi possível copiar.'));
-  return <div className="data-overlay" onPointerDown={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} onWheel={e => e.stopPropagation()}>
-    <button className="data-toggle" aria-expanded={open} onClick={() => setOpen(!open)}><SlidersHorizontal size={15} /><span>Propriedades</span>{shape && <code>%{config(shape).id}%</code>}</button>
-    {open && <aside className="data-panel" aria-label="Propriedades do elemento">
+  if (!open) return null;
+  return createPortal(<div className="data-overlay" onPointerDown={e => e.stopPropagation()} onKeyDown={e => { e.stopPropagation(); if (e.key === 'Escape') { e.preventDefault(); close(); } }} onWheel={e => e.stopPropagation()}>
+    {open && <aside id="element-inspector" className="data-panel" aria-label="Propriedades do elemento">
       <header className="data-panel-header">
-        <div><span className="data-eyebrow">Inspector</span><strong>{shapeTitle}</strong></div>
-        <button className="ui-icon-button" aria-label="Fechar propriedades" onClick={() => setOpen(false)}><X size={15} /></button>
+        <div><span className="data-eyebrow">Propriedades</span><strong>{shapeTitle}</strong></div>
+        <button ref={closeButton} className="ui-icon-button" aria-label="Fechar propriedades" onClick={close}><X size={15} /></button>
       </header>
       {!shape || !settings ? <div className="data-empty"><SlidersHorizontal size={24} /><strong>Selecione um elemento</strong><p>As entradas, transformações e saídas aparecem aqui.</p></div> : <div key={shape.id} className="data-panel-content">
         <fieldset disabled={readonly}>
@@ -56,5 +70,5 @@ export function DataPanel() {
       {message && <div role="status" className="data-message">{message}</div>}
       <details className="data-library"><summary><Database size={13} />Referências do board <span>{elements.length}</span></summary>{elements.map(s => <button className="data-element" key={s.id} onClick={() => { editor.setCurrentTool('select'); editor.select(s.id); }}><code>%{config(s).id}%</code><span>{String((s.props as Record<string,unknown>).title || s.type)}</span></button>)}</details>
     </aside>}
-  </div>;
+  </div>, editor.getContainer());
 }
