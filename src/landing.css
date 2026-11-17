@@ -1,0 +1,62 @@
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4
+ * macrostructure: Workbench hero (single section requested) · tone: technical
+ * theme: existing SPEC-01 hardware · audience: product builders · action: explore a real demo
+ * nav: minimal two destinations · footer: none (single hero) · motion: none
+ */
+* { box-sizing: border-box; }
+html, body { margin: 0; overflow-x: clip; }
+body { background: var(--canvas); color: var(--ink-1); font-family: var(--font-ui); -webkit-font-smoothing: antialiased; }
+.promo-page { width: min(100%, 1640px); margin: auto; padding: 0 clamp(20px, 4vw, 64px) 28px; }
+.promo-page a { color: inherit; text-decoration: none; }
+.promo-page a:focus-visible, .promo-page button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 5px; }
+.promo-nav { min-height: 86px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line-1); }
+.promo-brand { display: inline-flex; align-items: center; flex-shrink: 0; }
+.promo-brand img { display: block; width: 154px; height: auto; }
+.promo-edition { display: flex; align-items: center; gap: 8px; font-size: var(--text-2xs); letter-spacing: .08em; color: var(--ink-3); }
+.promo-edition i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.promo-open { font-size: var(--text-xs); white-space: nowrap; padding: 12px 0; }
+.promo-open span { margin-left: 12px; color: var(--accent-text); }
+.promo-open:hover { color: var(--accent-text); }
+.promo-hero { padding: 0; }
+.promo-intro { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); align-items: end; gap: clamp(24px, 5vw, 88px); padding: clamp(40px, 5vw, 76px) 0 48px; }
+.promo-intro h1 { font-size: clamp(30px, 3.7vw, 58px); font-weight: 400; line-height: 1.12; letter-spacing: -.065em; margin: 0; overflow-wrap: anywhere; min-width: 0; }
+.promo-intro h1 span { color: var(--ink-3); }
+.promo-pitch { max-width: 390px; }
+.promo-pitch p { font-size: var(--text-sm); line-height: 1.85; margin: 0 0 22px; color: var(--ink-2); }
+.promo-cta { display: inline-flex; align-items: center; justify-content: space-between; gap: 28px; min-height: 44px; padding: 0 18px; background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent-line); border-radius: var(--r-sm); box-shadow: 0 2px 0 var(--accent-line); font-size: var(--text-sm); font-weight: 500; white-space: nowrap; }
+.promo-cta:hover { background: var(--accent-strong); }
+.promo-cta:active { transform: translateY(2px); box-shadow: none; }
+.promo-pitch small { display: block; margin-top: 14px; font-size: var(--text-2xs); line-height: 1.6; color: var(--ink-3); }
+.promo-casebar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
+.promo-cases { display: flex; gap: 4px; flex-wrap: wrap; }
+.promo-cases button { appearance: none; font-family: var(--font-ui); font-size: var(--text-xs); padding: 12px; min-height: 44px; color: var(--ink-3); background: transparent; border: 1px solid transparent; border-radius: var(--r-sm); cursor: pointer; white-space: nowrap; }
+.promo-cases button:hover { color: var(--ink-1); background: var(--paper-1); }
+.promo-cases button[aria-pressed='true'] { color: var(--ink-1); background: var(--key-fill); border-color: var(--line-2); box-shadow: var(--tool-shadow); }
+.promo-case-number { margin-right: 10px; color: var(--accent-text); }
+.promo-case-detail { font-size: var(--text-2xs); color: var(--ink-3); text-align: right; }
+.promo-preview { margin: 0; }
+.promo-preview > a { display: block; border: 1px solid var(--line-2); border-radius: var(--r-lg); overflow: clip; background: var(--paper-0); box-shadow: var(--panel-shadow); }
+.promo-preview img { display: block; width: 100%; height: auto; }
+.promo-preview figcaption { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0 0; font-size: var(--text-2xs); color: var(--ink-3); line-height: 1.6; }
+.promo-preview figcaption > span > span { margin: 0 8px; color: var(--line-3); }
+.promo-preview figcaption a { white-space: nowrap; padding: 6px 0; }
+.promo-preview figcaption a:hover { color: var(--accent-text); }
+@media (max-width: 1000px) {
+  .promo-intro { grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 40px 0 32px; }
+  .promo-intro h1 { font-size: clamp(32px, 5.2vw, 52px); }
+  .promo-pitch { max-width: 600px; }
+  .promo-pitch p { max-width: 540px; margin-bottom: 16px; }
+  .promo-case-detail { display: none; }
+  .promo-edition { display: none; }
+}
+@media (max-width: 500px) {
+  .promo-nav { min-height: 72px; gap: 12px; }
+  .promo-brand img { width: 125px; }
+  .promo-open { font-size: var(--text-2xs); }
+  .promo-open span { margin-left: 2px; }
+  .promo-intro h1 { font-size: clamp(29px, 7.8vw, 38px); letter-spacing: -.06em; }
+  .promo-cases { display: grid; grid-template-columns: minmax(0,1fr); width: 100%; gap: 6px; }
+  .promo-cases button { text-align: left; }
+  .promo-preview figcaption { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .promo-preview > a { border-radius: var(--r-sm); }
+}

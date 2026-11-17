@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DefaultToolbar, createShapeId, useEditor, useValue } from "tldraw";
-import { AppWindow, Code2, FileText, Terminal, Globe, GitBranch, PanelRight, ChevronDown, PanelBottomOpen } from "lucide-react";
+import { AppWindow, Code2, FileText, Terminal, Globe, GitBranch, PanelRight, ChevronDown, PanelBottomOpen, Grip } from "lucide-react";
 import { type BlockShape } from "./shapes";
 import { exampleSource } from "./preview";
 import { useInspector } from "./InspectorContext";
+import { useToolbarDock } from "./useToolbarDock";
+import { dockLabels, toolbarDocks } from "./toolbar-position";
 
 const blocks = [
   { kind: "idea", label: "Documento", title: "Novo documento", icon: FileText },
@@ -26,6 +29,7 @@ export function MetalboardToolbar() {
     requestAnimationFrame(() => visibilityButton.current?.focus({ preventScroll: true }));
   }
   const { open: inspectorOpen, setOpen: setInspectorOpen } = useInspector();
+  const { toolbar, dock, position, vertical, dragging, grip } = useToolbarDock(inspectorOpen, collapsed);
   const readonly = useValue("readonly", () => editor.getIsReadonly(), [editor]);
   const narrow = useValue("compact drawing tools", () => editor.getViewportScreenBounds().w <= 620, [editor]);
   const add = useCallback((block: (typeof blocks)[number]) => {
@@ -74,9 +78,12 @@ export function MetalboardToolbar() {
     return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [editor, add, setInspectorOpen]);
   const optionKey = /mac/i.test(navigator.platform) ? "⌥" : "Alt+";
-  return <div className={`metalboard-toolbar${collapsed ? " is-collapsed" : ""}`}>
+  return createPortal(<div className="toolbar-dock-layer">
+    {dragging && <div className="toolbar-dock-targets" aria-hidden="true">{toolbarDocks.map(target => <div key={target} className={target === dock ? 'is-active' : ''}>{dockLabels[target]}</div>)}</div>}
+    <div ref={toolbar} data-dock={position.dock} data-orientation={vertical ? 'vertical' : 'horizontal'} className={`metalboard-toolbar dockable-toolbar${collapsed ? " is-collapsed" : ""}${dragging ? " is-dragging" : ""}`} style={{ left: position.x, top: position.y }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
+    <button className="toolbar-grip" type="button" aria-label={`Mover ferramentas: ${dockLabels[position.dock]}. Use as setas para posicionar.`} title="Arraste para posicionar · ou use as setas" {...grip}><Grip size={16} aria-hidden="true" /></button>
     <div className="toolbar-content" id="metalboard-toolset" hidden={collapsed}>
-    <div className="drawing-tools"><DefaultToolbar maxItems={narrow ? 4 : 5} /></div>
+    <div className="drawing-tools"><DefaultToolbar orientation={vertical ? 'vertical' : 'horizontal'} maxItems={narrow ? 4 : 5} /></div>
     {!readonly && <div className="metalboard-tools" role="group" aria-label="Ferramentas Metalboard">
       <div className="block-tool-keys">{blocks.map((block, index) => <button className="tlui-button metalboard-tool" key={block.kind} type="button" title={`Adicionar ${block.label.toLowerCase()} · ${optionKey}${index + 1}`} aria-label={`Adicionar ${block.label.toLowerCase()}`} aria-keyshortcuts={`Alt+${index + 1}`} onClick={() => add(block)}>
         <block.icon size={18} strokeWidth={1.6} aria-hidden="true" />
@@ -96,5 +103,5 @@ export function MetalboardToolbar() {
         <kbd className="tool-shortcut" aria-hidden="true">{optionKey}B</kbd>
       </button>
     </div>
-  </div>;
+  </div></div>, editor.getContainer());
 }

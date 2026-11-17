@@ -1,1 +1,23 @@
-[{"date":"2026-11-14","scope":"app","macrostructure":"Workbench","theme":"SPEC-01 hardware","source":"https://github.com/shuding/spec-01","nav":"instrument header","footer":"status rail","enrichment":"none","brief":"Metalboard app UI redesign with user-selected hardware theme"}]
+[
+  {
+    "date": "2026-11-16",
+    "scope": "landing",
+    "macrostructure": "Workbench hero",
+    "theme": "SPEC-01 hardware",
+    "nav": "minimal two destinations",
+    "footer": "none",
+    "enrichment": "real app screenshots",
+    "brief": "Single hero with checkout and support demo boards, compact approved Camadas identity"
+  },
+  {
+    "date": "2026-11-14",
+    "scope": "app",
+    "macrostructure": "Workbench",
+    "theme": "SPEC-01 hardware",
+    "source": "https://github.com/shuding/spec-01",
+    "nav": "instrument header",
+    "footer": "status rail",
+    "enrichment": "none",
+    "brief": "Metalboard app UI redesign with user-selected hardware theme"
+  }
+]

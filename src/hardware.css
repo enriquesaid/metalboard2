@@ -342,3 +342,66 @@ footer > span, footer > div { display: flex; align-items: center; gap: var(--spa
   .brand-logo .brand-mark { background: Canvas; box-shadow: none; }
   .brand-logo .brand-mark::before, .brand-wordmark { background: CanvasText; }
 }
+
+/* Demo boards use compact reading density so the complete workflow fits. */
+.app[data-demo] .note-markdown { padding: 16px; font-size: 13px; line-height: 1.5; }
+.app[data-demo] .note-markdown h2 { font-size: 18px; margin: 0 0 12px; line-height: 1.25; }
+.app[data-demo] .note-markdown p { margin: 0 0 12px; }
+.app[data-demo] .note-markdown ol { padding-left: 20px; margin-block: 10px; }
+.app[data-demo] .note-markdown li { margin-block: 4px; }
+.app[data-demo] .saved-output { font-size: 11px; line-height: 1.4; }
+.app[data-demo] .doc-toolbar:not(:focus-within) { display: none; }
+
+/* Docked tools stay in canvas coordinates, independent of the SDK footer. */
+.toolbar-dock-layer { position: absolute; inset: 0; z-index: 300; pointer-events: none; }
+.metalboard-toolbar.dockable-toolbar { position: absolute; margin: 0; max-width: calc(100% - 16px); max-height: calc(100% - 16px); flex-wrap: nowrap; }
+.toolbar-grip { display: flex; align-items: center; justify-content: center; align-self: stretch; flex-shrink: 0; width: 20px; min-height: 28px; padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-3); cursor: grab; touch-action: none; user-select: none; }
+.toolbar-grip:hover, .toolbar-grip:focus-visible { color: var(--ink-1); background: var(--paper-2); }
+.toolbar-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.is-dragging .toolbar-grip { cursor: grabbing; }
+.dockable-toolbar .toolbar-visibility { position: static; }
+.dockable-toolbar .tlui-main-toolbar__extras:empty { display: none; }
+.dockable-toolbar[data-orientation='vertical'] { flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; }
+.dockable-toolbar[data-orientation='vertical'] :is(.drawing-tools, .toolbar-visibility) { flex-shrink: 0; }
+.dockable-toolbar[data-orientation='vertical'] .toolbar-grip { width: 100%; height: 24px; min-height: 24px; }
+.dockable-toolbar[data-orientation='vertical'] .tlui-main-toolbar { position: static; padding: 0; }
+.dockable-toolbar[data-orientation='vertical'] .tlui-main-toolbar__inner { width: auto; }
+.dockable-toolbar[data-orientation='vertical'] .tlui-main-toolbar__left { width: auto; }
+.dockable-toolbar[data-orientation='vertical'] .tlui-main-toolbar__extras { width: var(--tool-size); height: auto; }
+.dockable-toolbar[data-orientation='vertical'] .tlui-main-toolbar__mobile-style-panel { position: static; }
+.dockable-toolbar[data-orientation='vertical'] .block-tool-keys { flex-direction: column; }
+.dockable-toolbar[data-orientation='vertical'] :is(.metalboard-tools, .inspector-tools, .toolbar-visibility) { padding: 8px 0 0; border: 0; border-top: 1px solid var(--line-2); }
+.dockable-toolbar[data-orientation='vertical'].is-collapsed .toolbar-visibility { border: 0; padding: 0; }
+.toolbar-dock-targets { position: absolute; inset: 8px; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 8px; }
+.toolbar-dock-targets > div { display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line-3); border-radius: var(--r-lg); background: color-mix(in srgb, var(--paper-0) 65%, transparent); color: var(--ink-2); font: 11px var(--font-ui); }
+.toolbar-dock-targets > .is-active { border: 2px solid var(--accent); color: var(--accent-text); background: color-mix(in srgb, var(--accent) 14%, var(--paper-0)); }
+@media (max-height: 800px) {
+  .dockable-toolbar[data-orientation='vertical']:not(.is-collapsed) .block-tool-keys { display: grid; grid-template-columns: repeat(2, var(--tool-size)); }
+}
+@media (min-width: 621px) and (max-width: 760px) {
+  .dockable-toolbar[data-orientation='horizontal'] { flex-wrap: wrap; justify-content: center; }
+}
+@media (max-width: 620px) {
+  .dockable-toolbar[data-orientation='horizontal'] { gap: 4px; }
+  .dockable-toolbar[data-orientation='horizontal'] .toolbar-grip { width: 100%; height: 20px; min-height: 20px; }
+  .dockable-toolbar[data-orientation='horizontal']:not(.is-collapsed) .toolbar-visibility { position: absolute; right: 4px; top: 4px; }
+  .dockable-toolbar[data-orientation='horizontal']:not(.is-collapsed) .toolbar-toggle { height: 20px; min-height: 20px; }
+  .dockable-toolbar:not(.is-collapsed) .toolbar-toggle::before { display: none; }
+  .dockable-toolbar:not(.is-collapsed) .toolbar-toggle .tool-shortcut { display: none; }
+  .dockable-toolbar[data-orientation='vertical'] .block-tool-keys { display: grid; grid-template-columns: repeat(2, var(--tool-size)); }
+}
+@media (max-height: 680px) {
+  .dockable-toolbar[data-orientation='vertical'] { --tool-size: 32px; --tool-gap: 2px; gap: 4px; }
+  .dockable-toolbar[data-orientation='vertical'] :is(.metalboard-tools, .inspector-tools, .toolbar-visibility) { padding-top: 4px; }
+}
+@media (max-width: 360px) {
+  .dockable-toolbar[data-orientation='horizontal'] { --tool-size: 40px; }
+  .dockable-toolbar[data-orientation='horizontal'] .tlui-main-toolbar__inner { width: 250px; }
+}
+.app[data-demo] .doc-editor .ProseMirror { padding: 16px; font-size: 13px; line-height: 1.5; }
+.app[data-demo] .doc-editor .ProseMirror h2 { font-size: 18px; line-height: 1.25; margin: 0 0 12px; }
+.app[data-demo] .tlui-style-panel { display: none; }
+.app[data-demo] .doc-editor .ProseMirror { padding: 12px 16px; font-size: 12px; line-height: 1.45; }
+.app[data-demo] .doc-editor .ProseMirror h2 { font-size: 16px; }
+.app[data-demo] .note-markdown { padding: 12px 16px; font-size: 12px; line-height: 1.45; }
+.app[data-demo] .note-markdown h2 { font-size: 16px; }

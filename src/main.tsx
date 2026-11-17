@@ -1,13 +1,14 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
-import "tldraw/tldraw.css";
 import "./tokens.css";
-import "./style.css";
-import "./dataflow.css";
-import "./hardware.css";
+import { demoFromSearch } from "./demos";
+const App = lazy(() => import('./App'));
+const Landing = lazy(() => import('./Landing'));
+const isPresentation = window.location.pathname.replace(/\/$/, '') === '/apresentacao';
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <Suspense fallback={<p role="status" style={{fontFamily:'var(--font-ui)',padding:24}}>Abrindo Metalboard…</p>}>
+      {isPresentation ? <Landing /> : <App demo={demoFromSearch(window.location.search)} />}
+    </Suspense>
   </React.StrictMode>,
 );

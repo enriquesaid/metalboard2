@@ -145,3 +145,12 @@ Licença tldraw necessária para distribuição de produção conforme os termos
 O mapa em [docs/agentgrid-feature-map.md](docs/agentgrid-feature-map.md) registra a referência analisada e o caminho planejado: bloco de agente com provider/modelo, coordenador e workers especializados, follow-up e cancelamento por agente, integração Git com worktrees e diffs, busca de elementos e telemetria local de uso.
 
 A copy de landing page em [docs/metalboard-landing-copy.md](docs/metalboard-landing-copy.md) deriva do protótipo atual e das imagens de direção visual.
+
+## Página de divulgação e exemplos
+
+Acesse `/apresentacao` no servidor local para abrir o hero de divulgação. O seletor alterna entre duas capturas reais, em `public/marketing/`, e abre o board correspondente:
+
+- `/?demo=checkout`: diagnóstico de funil mobile/desktop, com dados JSON, preview React interativo, hipótese e plano de verificação.
+- `/?demo=suporte`: triagem de chamados, cálculo de SLA, filtro de urgência e passagem de turno.
+
+Os dados são sintéticos. Os exemplos usam o resolvedor de referências e o preview reais do app. Cada demo fica em memória e não substitui o board persistido; exporte o exemplo para guardar alterações. A captura usa viewport de 1600×1000. Fontes dos exemplos: `src/demos.ts`; página: `src/Landing.tsx` e `src/landing.css`.

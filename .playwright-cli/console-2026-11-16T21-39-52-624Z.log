@@ -1,0 +1,73 @@
+[     479ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[    4833ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[    4836ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[    4836ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[    4837ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[    4856ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[    4857ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   33542ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[   34410ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   34413ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   34413ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   34414ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   62142ms] [ERROR] You are calling ReactDOMClient.createRoot() on a container that has already been passed to createRoot() before. Instead, call root.render() on the existing root instead if you want to update it. @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:18915
+[   62277ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[   63170ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   63172ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   63172ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   63173ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   80545ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[   81369ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   81371ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   81372ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[   81372ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  100384ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[  101161ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  101164ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  101165ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  101165ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  127820ms] [ERROR] You are calling ReactDOMClient.createRoot() on a container that has already been passed to createRoot() before. Instead, call root.render() on the existing root instead if you want to update it. @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:18915
+[  127956ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[  128775ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[  129541ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  129543ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  129544ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  129544ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  129670ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[  130423ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  130425ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  130425ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  130426ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-2BX4F467.js?v=d3df3471:50885
+[  130542ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165
+[ 1704084ms] [LOG] [vite] server connection lost. Polling for restart... @ http://127.0.0.1:1420/@vite/client:865
+[ 1704262ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=d3df3471:22165

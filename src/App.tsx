@@ -28,6 +28,11 @@ import { createMermaidFromSelection } from "./mermaid-canvas";
 import { SelectionActions } from "./SelectionActions";
 import { InspectorProvider, useInspector } from "./InspectorContext";
 import { EditorChrome, EditorFileActionsContext } from "./EditorChrome";
+import { demoNames, seedDemo, type DemoId } from "./demos";
+import "tldraw/tldraw.css";
+import "./style.css";
+import "./dataflow.css";
+import "./hardware.css";
 const shapeUtils = [BlockUtil, DataTextUtil, DataGeoUtil, DataNoteUtil, DataArrowUtil];
 const editorOptions = { actionShortcutsLocation: "menu" as const };
 const components = {
@@ -46,15 +51,15 @@ const components = {
   ),
 };
 type ImportBackup = { name: string; snapshot: ReturnType<typeof getSnapshot> };
-export default function App() {
-  return <InspectorProvider><Workspace /></InspectorProvider>;
+export default function App({ demo }: { demo?: DemoId }) {
+  return <InspectorProvider><Workspace demo={demo} /></InspectorProvider>;
 }
-function Workspace() {
+function Workspace({ demo }: { demo?: DemoId }) {
   const { open: inspectorOpen, setOpen: setInspectorOpen } = useInspector();
   const [editor, setEditor] = useState<Editor>(),
     [message, setMessage] = useState(""),
     [name, setName] = useState(
-      () => localStorage.getItem("metalboard-name") || "Meu próximo fluxo",
+      () => demo ? demoNames[demo] : localStorage.getItem("metalboard-name") || "Meu próximo fluxo",
     );
   const input = useRef<HTMLInputElement>(null);
   const importConfirm = useRef<HTMLButtonElement>(null);
@@ -88,6 +93,10 @@ function Workspace() {
     setEditor(e);
     e.user.updateUserPreferences({ colorScheme: "light" });
     e.updateInstanceState({ isGridMode: true });
+    if (demo) {
+      seedDemo(e, demo);
+      return cleanup;
+    }
     if (
       !e.getCurrentPageShapes().length &&
       !localStorage.getItem("metalboard-initialized")
@@ -195,7 +204,7 @@ function Workspace() {
       }
       if (typeof data.name === "string") {
         setName(data.name);
-        localStorage.setItem("metalboard-name", data.name);
+        if (!demo) localStorage.setItem("metalboard-name", data.name);
       }
       setImportBackup({ name, snapshot: previous });
       setPendingImport(undefined);
@@ -209,7 +218,7 @@ function Workspace() {
     if (!editor || !importBackup) return;
     loadSnapshot(editor.store, importBackup.snapshot);
     setName(importBackup.name);
-    localStorage.setItem("metalboard-name", importBackup.name);
+    if (!demo) localStorage.setItem("metalboard-name", importBackup.name);
     setImportBackup(undefined);
     editor.zoomToFit();
     notify("Board anterior restaurado");
@@ -232,7 +241,7 @@ function Workspace() {
   }, [editor, name]);
   return (
     <EditorFileActionsContext.Provider value={{ importBoard: () => input.current?.click(), exportBoard }}>
-    <div className="app" data-skin="hardware">
+    <div className="app" data-skin="hardware" data-demo={demo || undefined}>
       <header className="topbar">
         <div className="brand">
           <div id="editor-menu-host" className="editor-chrome editor-menu-host" />
@@ -248,12 +257,12 @@ function Workspace() {
             value={name}
             onChange={(e) => {
               setName(e.target.value);
-              localStorage.setItem("metalboard-name", e.target.value);
+              if (!demo) localStorage.setItem("metalboard-name", e.target.value);
             }}
           />
           <span className="local-label">
             <i />
-            LOCAL
+            {demo ? 'DEMO' : 'LOCAL'}
           </span>
         </div>
         <div id="editor-pages-host" className="editor-chrome editor-pages-host" />
@@ -282,7 +291,7 @@ function Workspace() {
             components={components}
             options={editorOptions}
             shapeUtils={shapeUtils}
-            persistenceKey="metalboard-v1"
+            persistenceKey={demo ? undefined : "metalboard-v1"}
             onMount={mount}
             licenseKey={import.meta.env.VITE_TLDRAW_LICENSE_KEY}
           />
@@ -291,8 +300,8 @@ function Workspace() {
       <footer>
         <span>
           <span className="status-dot active" />
-          <span className="save-label-full">Salvo neste dispositivo</span>
-          <span className="save-label-compact">Salvo local</span>
+          <span className="save-label-full">{demo ? 'Demonstração · dados fictícios · exporte para guardar' : 'Salvo neste dispositivo'}</span>
+          <span className="save-label-compact">{demo ? 'Demo temporária' : 'Salvo local'}</span>
         </span>
         <span className="footer-instrument">{String(status.count).padStart(2, "0")} ELEMENTOS <span className="footer-sep">/</span> CANVAS INFINITO</span>
         <div>
