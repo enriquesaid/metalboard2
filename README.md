@@ -2,7 +2,7 @@
 
 Protótipo desktop de canvas infinito com tldraw, React e Tauri: notas, terminais, componentes, requisições HTTP, páginas da web e diagramas no mesmo board — conectados por referências de dados.
 
-![Board do Metalboard com documento, terminal, componente React e diagrama Mermaid conectados por setas de dependência](docs/images/hero-board.png)
+![Board de diagnóstico de checkout com dados de eventos, funil interativo, hipótese e próximo teste conectados por setas](docs/images/hero-board.png)
 
 Requer Node 22+, Rust e ferramentas de desenvolvimento macOS.
 
@@ -31,19 +31,20 @@ A barra de ferramentas do tldraw inclui o grupo **Ferramentas Metalboard**: Docu
 
 ## Fluxo de dados entre elementos
 
-Qualquer elemento pode consumir o output de outro com uma referência `%id%` — digitada no conteúdo, na entrada do bloco ou montada no inspetor **Propriedades** (canto superior direito). O board desenha setas pontilhadas animadas mostrando cada dependência, e o resolvedor detecta referências circulares (limite de 40 encadeamentos).
+Qualquer elemento pode consumir o output de outro com uma referência `%id%`. Digite a referência no conteúdo ou configure a entrada no inspetor, acessível por **Propriedades** na barra de ferramentas ou por **Dados** no bloco. O board desenha setas pontilhadas animadas mostrando cada dependência, e o resolvedor detecta referências circulares (limite de 40 encadeamentos).
 
 No inspetor cada elemento expõe identidade (`%id%`), entrada e transformação de output: interpretar como JSON, selecionar um caminho (`users[0].name`), mapear cada item de um array e aplicar um template final. O resultado é entregue como `string`, número, objeto ou array para o elemento consumidor.
 
-![Inspetor de propriedades do componente consumindo o documento Ideia](docs/images/inspector.png)
+![Inspetor de propriedades da Fila de suporte com a referência %tickets% e os dados de entrada dos chamados](docs/images/inspector.png)
 
 ```mermaid
 flowchart LR
-    ideia["Documento · Ideia"] -->|"ref element_9"| componente["Componente React"]
-    terminal["Terminal"] -->|"ref element_10"| fluxo["Diagrama Mermaid"]
+    tickets["Saída · Chamados recebidos"] -->|"%tickets%"| queue["Componente React · Fila de suporte"]
+    queue -->|"%queue.next.ticket%"| action["Documento · Prioridade do plantão"]
+    action -->|"%action%"| handoff["Documento · Passagem de turno"]
 ```
 
-Um documento com `%element_10%` mostra o conteúdo resolvido quando fora de foco e a fonte crua durante a edição; um Fetch pode montar a URL com `%input%` e o body JSON aceita `%id%` preservando o tipo do valor substituído.
+O documento **Prioridade do plantão** mostra o chamado resolvido quando está fora de foco e exibe a referência `%queue.next.ticket%` durante a edição. Um Fetch pode montar a URL com `%input%` e o body JSON aceita `%id%` preservando o tipo do valor substituído.
 
 ## Terminal com sessão persistente
 
@@ -66,13 +67,13 @@ No navegador o bloco indica “Desktop necessário”: a execução local exige 
 
 ## API e páginas da web
 
-![Bloco Fetch com método, URL e abas de configuração](docs/images/fetch-block.png)
+![Bloco de requisição HTTP com método GET, URL e parâmetros na aba Query](docs/images/fetch-block.png)
 
 O **Fetch** cobre GET, POST, PUT, PATCH, DELETE, HEAD e OPTIONS com pares de query/params/headers (valores aceitam referências), autenticação Bearer, Basic ou API Key, body JSON, texto ou form e timeout configurável. A requisição usa o transporte nativo do desktop — sem restrição de CORS. O corpo da resposta tem limite de 2 MB e redirecionamentos automáticos ficam desativados. Credenciais de autenticação ficam apenas na sessão: nunca são salvas no board nem exportadas.
 
-O **Embed** incorpora a página em um iframe (`sandbox`, sem cookies) e, na aba Output, extrai o HTML como Markdown da página ou relatório JSON (metadados, headings, links e texto visível). Sites com `X-Frame-Options` podem bloquear a incorporação — a extração funciona mesmo assim.
+O **Embed** incorpora a página em um iframe (`sandbox`, sem cookies) e, na aba **Extração de dados**, extrai o HTML como Markdown da página ou relatório JSON (metadados, headings, links e texto visível). Sites com `X-Frame-Options` podem bloquear a incorporação — a extração funciona mesmo assim.
 
-![Bloco Embed com URL e abas Página e Output](docs/images/embed-block.png)
+![Bloco de página web com um guia de suporte demonstrativo e as abas Página e Extração de dados](docs/images/embed-block.png)
 
 Ambos executam rede apenas no app desktop, pela mesma política SSRF do backend nativo: apenas HTTP/HTTPS, com resolução de DNS e endereços privados, loopback e reservados rejeitados no destino final. No navegador o iframe do Embed continua funcionando, mas os botões de envio e extração ficam desativados.
 
