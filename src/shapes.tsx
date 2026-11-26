@@ -337,6 +337,7 @@ function Block({ shape }: { shape: BlockShape }) {
       className={`block block-${p.kind} board-block`}
       style={{ width: p.w, height: p.h }}
       role="group"
+      data-editing-document={p.kind === "idea" && noteEditing && !readonly ? "true" : undefined}
       aria-label={distinctTitle ? `${kindLabel}: ${title}` : title}
     >
       <div className="block-header">

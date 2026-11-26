@@ -29,6 +29,7 @@
     "@lezer/highlight": "^1.2.4",
     "@milkdown/kit": "^7.22.2",
     "@tauri-apps/api": "^2.0.0",
+    "@tldraw/assets": "5.4.2",
     "@tldraw/mermaid": "^5.4.2",
     "dompurify": "^3.4.16",
     "idb": "^7.1.1",

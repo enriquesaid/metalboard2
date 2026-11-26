@@ -189,6 +189,7 @@ footer > span, footer > div { display: flex; align-items: center; gap: var(--spa
 .ui-action.is-success, .ui-icon-button.is-success { color: var(--status-on); }
 .app .tlui-button[data-value='select'] .tlui-icon { mask: url('/icons/pointer.svg') center / 24px 24px no-repeat !important; }
 .selection-actions { position: absolute; top: var(--selection-top); left: var(--selection-left); width: var(--selection-width); z-index: 290; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 5px 6px 7px 10px; border: 1px solid var(--line-3); border-radius: var(--r-md); background: var(--paper-0); color: var(--ink-2); box-shadow: var(--panel-shadow); pointer-events: all; }
+.tl-container:has([data-editing-document]) .selection-actions { display: none; }
 .selection-actions[data-inspector-open] { left: clamp(12px, var(--selection-left), calc(100% - var(--inspector-width) - var(--selection-width) - 16px)); }
 .selection-actions > span { font-size: var(--text-2xs); white-space: nowrap; }
 .selection-actions .ui-action { min-height: 28px; padding: 5px 8px; font-size: var(--text-2xs); color: var(--ink-1); }

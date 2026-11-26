@@ -49,6 +49,7 @@ export function addBoardBlock(editor: Editor, kind: BlockTool["kind"], fromEmpty
   const id = createShapeId();
   const w = block.kind === "embed" ? 620 : block.kind === "fetch" ? 580 : block.kind === "code" ? 460 : block.kind === "mermaid" ? 520 : 400;
   const h = block.kind === "embed" ? 470 : block.kind === "fetch" ? 440 : block.kind === "code" ? 390 : block.kind === "mermaid" ? 430 : 300;
+  editor.updateViewportScreenBounds(editor.getContainer());
   const placement = blockPlacement(editor, w, h);
   editor.markHistoryStoppingPoint();
   editor.setCurrentTool("select");

@@ -752,3 +752,121 @@ comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UO
 comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
 [ 2467058ms] [WARNING] Language pt-br: missing messages for keys:
 comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2480163ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2480215ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2480215ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2480216ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2484848ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2484859ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2484859ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2484860ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2544254ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2544289ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2544289ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2544289ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2609627ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2609631ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2609631ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2609632ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-YU7UOL33.js?v=fcdb2840:50673
+[ 2616107ms] [ERROR] [vite] TypeError: Cannot read properties of undefined (reading 'startsWith')
+    at formatAssetUrl (http://127.0.0.1:1420/node_modules/.vite/deps/@tldraw_assets_imports__vite.js?v=13ba501c:27052:22)
+    at getAssetUrlsByImport (http://127.0.0.1:1420/node_modules/.vite/deps/@tldraw_assets_imports__vite.js?v=13ba501c:27245:11)
+    at http://127.0.0.1:1420/src/BoardCanvas.tsx?t=1795653370744:10:19 @ http://127.0.0.1:1420/@vite/client:809
+[ 2616108ms] [ERROR] [vite] Failed to reload /src/BoardCanvas.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:1420/@vite/client:809
+[ 2616706ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=9f42f0e5:22165
+[ 2620982ms] TypeError: Cannot read properties of undefined (reading 'startsWith')
+    at formatAssetUrl (http://127.0.0.1:1420/node_modules/.vite/deps/@tldraw_assets_imports__vite.js?v=9f42f0e5:27052:22)
+    at getAssetUrlsByImport (http://127.0.0.1:1420/node_modules/.vite/deps/@tldraw_assets_imports__vite.js?v=9f42f0e5:27245:11)
+    at http://127.0.0.1:1420/src/BoardCanvas.tsx?t=1795653370744:10:19
+[ 2620751ms] [WARNING] %s
+
+%s
+ An error occurred in one of your React components. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=9f42f0e5:7241
+[ 2625997ms] TypeError: Cannot read properties of undefined (reading 'startsWith')
+    at formatAssetUrl (http://127.0.0.1:1420/node_modules/.vite/deps/@tldraw_assets_imports__vite.js?v=9f42f0e5:27052:22)
+    at getAssetUrlsByImport (http://127.0.0.1:1420/node_modules/.vite/deps/@tldraw_assets_imports__vite.js?v=9f42f0e5:27245:11)
+    at http://127.0.0.1:1420/src/BoardCanvas.tsx?t=1795653370744:10:19
+[ 2625997ms] [WARNING] %s
+
+%s
+ An error occurred in one of your React components. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=9f42f0e5:7241
+[ 2696759ms] [LOG] [vite] server connection lost. Polling for restart... @ http://127.0.0.1:1420/@vite/client:865
+[ 2705328ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=cf6babb2:22165
+[ 2713187ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2713366ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2713378ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2713413ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2810632ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2810702ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2810712ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2810712ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2821228ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2821240ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2821240ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2821240ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2822818ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2822905ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2822921ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2822923ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2886557ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2886563ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2886563ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2886575ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2897752ms] [LOG] [vite] server connection lost. Polling for restart... @ http://127.0.0.1:1420/@vite/client:865
+[ 2898304ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=cf6babb2:22165
+[ 2901377ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2901379ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2901379ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2901379ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=cf6babb2:50673
+[ 2932718ms] [LOG] [vite] server connection lost. Polling for restart... @ http://127.0.0.1:1420/@vite/client:865
+[ 2934080ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-3PC2I5Q5.js?v=c7611f6a:22165
+[ 2937818ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=c7611f6a:50673
+[ 2937820ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=c7611f6a:50673
+[ 2937942ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=c7611f6a:50673
+[ 2937942ms] [WARNING] Language pt-br: missing messages for keys:
+comments.link-copied @ http://127.0.0.1:1420/node_modules/.vite/deps/chunk-UVXQ4H65.js?v=c7611f6a:50673

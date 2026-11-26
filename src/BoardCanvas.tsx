@@ -1,4 +1,5 @@
 import { createContext, useContext, useLayoutEffect, useMemo, useRef } from "react";
+import { getAssetUrlsByImport } from "@tldraw/assets/imports.vite";
 import { Download, LockKeyhole, RotateCw, TriangleAlert } from "lucide-react";
 import { ErrorBoundary, Tldraw, type TldrawProps } from "tldraw";
 import { desktopAvailable } from "./runtime";
@@ -13,6 +14,7 @@ type BoardCanvasProps = TldrawProps & {
 };
 
 const FailureContext = createContext<BoardCanvasProps["onUnavailable"] | null>(null);
+const assetUrls = getAssetUrlsByImport();
 
 function ReportCanvasError() {
   const onUnavailable = useContext(FailureContext);
@@ -72,7 +74,7 @@ export function BoardCanvas({ issue, onUnavailable, onExportBackup, components, 
     <div className="board-canvas-host" ref={host}>
       <FailureContext.Provider value={onUnavailable}>
         <ErrorBoundary fallback={ReportCanvasError}>
-          <Tldraw {...props} components={editorComponents} />
+          <Tldraw assetUrls={assetUrls} {...props} components={editorComponents} />
         </ErrorBoundary>
       </FailureContext.Provider>
     </div>

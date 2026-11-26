@@ -4,5 +4,6 @@ export default defineConfig({
   plugins: [react()],
   clearScreen: false,
   server: { port: 1420, strictPort: true },
+  optimizeDeps: { exclude: ["@tldraw/assets/imports.vite"] },
   envPrefix: ["VITE_", "TAURI_ENV_"],
 });
