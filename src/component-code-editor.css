@@ -1,0 +1,160 @@
+.component-code-editor {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--paper-2);
+  color: var(--ink-1);
+}
+
+.component-code-editor__hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.component-code-editor__host {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.component-code-editor .cm-editor {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  color: inherit;
+  font-size: var(--text-sm);
+}
+
+.component-code-editor .cm-editor.cm-focused {
+  outline: 1px solid var(--focus-ring);
+  outline-offset: -1px;
+}
+
+.component-code-editor .cm-scroller {
+  overflow: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+
+.component-code-editor .cm-content {
+  padding-block: 8px;
+  caret-color: var(--ink-1);
+}
+
+.component-code-editor :is(.cm-content, .cm-line, .cm-line span, .cm-textfield) {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.component-code-editor .cm-line {
+  padding-inline: 9px;
+}
+
+.component-code-editor .cm-gutters {
+  border-color: var(--line-2);
+  background: var(--paper-3);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.component-code-editor .cm-lineNumbers .cm-gutterElement {
+  padding-inline: 7px;
+}
+
+.component-code-editor .cm-activeLine {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.component-code-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--accent) 12%, var(--paper-3));
+  color: var(--ink-1);
+}
+
+.component-code-editor .cm-editor .cm-matchingBracket {
+  background: color-mix(in srgb, var(--accent) 23%, transparent);
+  outline: 1px solid var(--accent-line);
+}
+
+.component-code-editor .cm-editor .cm-nonmatchingBracket {
+  background: var(--error-bg);
+  outline: 1px solid var(--error-line);
+}
+
+.component-code-editor .cm-placeholder {
+  color: var(--ink-3);
+}
+
+.component-code-editor .cm-panels-top {
+  max-height: 65%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-color: var(--line-2);
+  background: var(--paper-3);
+  color: var(--ink-1);
+}
+
+.component-code-editor .cm-panel.cm-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 29px 6px 7px;
+  font-size: var(--text-xs);
+}
+
+.component-code-editor .cm-search br {
+  flex-basis: 100%;
+}
+
+.component-code-editor .cm-search :is(input, button, label) {
+  margin: 0;
+}
+
+.component-code-editor .cm-search :is(.cm-button, .cm-textfield) {
+  min-height: 25px;
+  border: 1px solid var(--line-3);
+  border-radius: var(--r-sm);
+  padding-inline: 6px;
+  color: var(--ink-1);
+  background: var(--paper-2);
+}
+
+.component-code-editor .cm-search .cm-textfield {
+  width: min(125px, 100%);
+}
+
+.component-code-editor .cm-search label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--text-xs);
+}
+
+.component-code-editor .cm-search button[name="close"] {
+  top: 6px;
+  right: 4px;
+  width: 21px;
+  height: 25px;
+  border-radius: var(--r-sm);
+  font-size: 16px;
+}
+
+.component-code-editor .cm-tooltip {
+  border: 1px solid var(--line-3);
+  background: var(--paper-2);
+  color: var(--ink-1);
+}
+
+.component-code-editor .cm-tooltip-autocomplete ul li[aria-selected] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}

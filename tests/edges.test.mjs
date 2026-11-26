@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 async function load(path) { const result = await build({ entryPoints:[path], bundle:true, write:false, platform:'node', format:'esm' }); return import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`); }
-const { references, referencesOf, dependencyEdges, edgeAnchors } = await load('src/dataflow/edges.ts');
+const { references, referencesOf, dependencyEdges, routeEdges, roundedEdgePath } = await load('src/dataflow/edges.ts');
 const shape = (id, props = {}, meta = {}) => ({ id:`shape:${id}`, type:'block', props, meta });
 const block = (alias, content, extraProps = {}, meta = {}) => ({ id:`shape:${alias}`, type:'block', props:{ kind:'idea', content, title:'%element_1% no título', origin:'%element_1%', ...extraProps }, meta:{ metalboard:{ id:alias, input:'', output:{ source:'default', value:'', parseJson:false, path:'', mapPath:'', template:'' } }, ...meta } });
 
@@ -49,13 +49,73 @@ test('dependencyEdges liga produtor ao consumidor, deduplica e descarta self/mis
   assert.deepEqual(dependencyEdges([reservado]), []);
 });
 
-test('edgeAnchors ancora nas bordas com respiro e sem NaN em caixas sobrepostas', () => {
-  const from = { x:0, y:0, w:100, h:50 }, to = { x:300, y:0, w:100, h:50 };
-  const { start, end } = edgeAnchors(from, to);
-  assert.equal(start.y, 25); assert.ok(Math.abs(start.x - 108) < 0.001);
-  assert.equal(end.y, 25); assert.ok(Math.abs(end.x - 291) < 0.001);
-  const diagonal = edgeAnchors(from, { x:300, y:200, w:100, h:50 });
-  assert.ok(Number.isFinite(diagonal.start.x) && Number.isFinite(diagonal.end.y));
-  const sobrepostas = edgeAnchors(from, { x:20, y:10, w:100, h:50 });
-  assert.ok(Number.isFinite(sobrepostas.start.x) && Number.isFinite(sobrepostas.end.x));
+const box = (x, y, w = 100, h = 80) => ({ x, y, w, h });
+const link = (source, consumer) => ({ source, consumer, refs: [source] });
+
+function crossesBox(points, rect) {
+  return points.slice(1).some((b, index) => {
+    const a = points[index];
+    if (a.y === b.y) {
+      return a.y > rect.y && a.y < rect.y + rect.h &&
+        Math.min(a.x, b.x) < rect.x + rect.w && Math.max(a.x, b.x) > rect.x;
+    }
+    return a.x > rect.x && a.x < rect.x + rect.w &&
+      Math.min(a.y, b.y) < rect.y + rect.h && Math.max(a.y, b.y) > rect.y;
+  });
+}
+
+test('routeEdges ancora fora dos cartões e arredonda os desvios ao redor de obstáculos', () => {
+  const obstacle = box(170, -20, 100, 120);
+  const boxes = new Map([['a', box(0, 0)], ['x', obstacle], ['b', box(340, 0)]]);
+  const [edge] = routeEdges([link('a', 'b')], boxes);
+  assert.deepEqual(edge.points[0], { x: 105, y: 40 });
+  assert.deepEqual(edge.points.at(-1), { x: 333, y: 40 });
+  assert.equal(crossesBox(edge.points, obstacle), false);
+  assert.match(roundedEdgePath(edge.points, 12), / Q /);
+});
+
+test('routeEdges troca de face quando outro cartão está encostado na saída', () => {
+  const obstacle = box(100, 0);
+  const boxes = new Map([['a', box(0, 0)], ['x', obstacle], ['b', box(340, 0)]]);
+  const [edge] = routeEdges([link('a', 'b')], boxes);
+  assert.notEqual(edge.points[0].x, 105);
+  assert.equal(crossesBox(edge.points, obstacle), false);
+});
+
+test('routeEdges escolhe corredores diferentes para saídas que contornam o mesmo cartão', () => {
+  const obstacle = box(155, -10, 90, 100);
+  const boxes = new Map([['a', box(0, 0)], ['x', obstacle], ['b', box(350, 0)], ['c', box(540, 0)]]);
+  const edges = routeEdges([link('a', 'b'), link('a', 'c')], boxes);
+  const corridorY = ({ points }) => points.find((end, index) => {
+    const start = points[index - 1];
+    return start && start.y === end.y && start.x < 200 && end.x > 200;
+  })?.y;
+  const rails = edges.map(corridorY);
+  assert.ok(rails.every(Number.isFinite));
+  assert.notEqual(rails[0], rails[1]);
+  assert.ok(edges.every(({ points }) => !crossesBox(points, obstacle)));
+});
+
+test('routeEdges distribui entradas e saídas na mesma face em ordem estável', () => {
+  const boxes = new Map([['up', box(0, 0)], ['down', box(0, 90)], ['a', box(300, 45)], ['b', box(600, 0)], ['c', box(600, 90)]]);
+  const links = [link('a', 'b'), link('up', 'a'), link('a', 'c'), link('down', 'a')];
+  const edges = routeEdges(links, boxes);
+  assert.deepEqual(edges, routeEdges([...links].reverse(), boxes));
+  const [upperOut, lowerOut] = edges.filter(edge => edge.source === 'a').map(edge => edge.points[0]);
+  const [upperIn, lowerIn] = ['up', 'down'].map(source => edges.find(edge => edge.source === source).points.at(-1));
+  assert.equal(upperOut.x, lowerOut.x);
+  assert.equal(upperIn.x, lowerIn.x);
+  assert.ok(upperOut.y < lowerOut.y);
+  assert.ok(upperIn.y < lowerIn.y);
+});
+
+test('routeEdges desvia ao ligar cartões sobrepostos e ignora extremos de outra página', () => {
+  const boxes = new Map([['a', box(0, 0)], ['b', box(0, 0)]]);
+  const edges = routeEdges([link('a', 'b'), link('b', 'a'), link('a', 'unavailable')], boxes);
+  assert.equal(edges.length, 2);
+  for (const { points } of edges) {
+    assert.ok(points.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y)));
+    assert.equal(crossesBox(points, boxes.get('a')), false);
+  }
+  assert.notDeepEqual(edges[0].points, [...edges[1].points].reverse());
 });

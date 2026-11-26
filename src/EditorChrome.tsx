@@ -9,15 +9,20 @@ import {
   TldrawUiMenuContextProvider,
   TldrawUiMenuGroup,
   TldrawUiMenuItem,
+  TldrawUiMenuSubmenu,
   TldrawUiToolbar,
   useCanRedo,
   useCanUndo,
   useEditor,
 } from "tldraw";
+import { boardHref } from "./BoardStart";
+import type { DemoId } from "./demos";
+import { addBoardBlock, boardBlockTools } from "./MetalboardToolbar";
 
 export const EditorFileActionsContext = createContext<{
   importBoard: () => void;
   exportBoard: () => void;
+  demo?: DemoId;
 } | null>(null);
 
 type Hosts = { menu: HTMLElement; pages: HTMLElement; history: HTMLElement; popups: HTMLElement };
@@ -65,6 +70,14 @@ export function EditorChrome() {
           <TldrawUiMenuGroup id="workspace-files">
             <TldrawUiMenuItem id="workspace-import" label="Importar board…" readonlyOk onSelect={files.importBoard} />
             <TldrawUiMenuItem id="workspace-export" label="Exportar board" readonlyOk onSelect={files.exportBoard} />
+            <TldrawUiMenuItem id="workspace-examples" label={files.demo ? "Voltar ao meu board" : "Explorar exemplos"} readonlyOk onSelect={() => window.location.assign(boardHref(files.demo ? undefined : "checkout"))} />
+          </TldrawUiMenuGroup>
+          <TldrawUiMenuGroup id="workspace-blocks">
+            <TldrawUiMenuSubmenu id="workspace-add-block" label="Adicionar bloco">
+              {boardBlockTools.map((tool, index) => (
+                <TldrawUiMenuItem key={tool.kind} id={`workspace-add-${tool.kind}`} label={tool.label} kbd={`alt+${index + 1}`} onSelect={() => addBoardBlock(editor, tool.kind)} />
+              ))}
+            </TldrawUiMenuSubmenu>
           </TldrawUiMenuGroup>
           <DefaultMainMenuContent />
         </DefaultMainMenu>

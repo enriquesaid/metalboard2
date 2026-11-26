@@ -4,7 +4,9 @@ import {
   HTMLContainer,
   Rectangle2d,
   T,
+  type Editor,
   type TLBaseShape,
+  type TLShapeId,
   useEditor,
   useValue,
 } from "tldraw";
@@ -12,24 +14,31 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 import {
   AppWindow,
+  Braces,
   Check,
   Code2,
   Copy,
   FileText,
   GitBranch,
   Globe,
+  Link2,
+  Pencil,
+  Pin,
   Play,
+  SlidersHorizontal,
   Square,
   Terminal,
   X,
 } from "lucide-react";
-import { buildPreview } from "./preview";
 import { desktopAvailable, startTerminal } from "./runtime";
 import { FetchBlock } from "./FetchBlock";
 import { EmbedBlock } from "./EmbedBlock";
+import { ComponentBlock } from "./ComponentBlock";
 import { MarkdownDoc } from "./MarkdownDoc";
 import { useDataResolver, updateMeta } from "./dataflow/editor";
 import { config, display, unescapeMarkdown } from "./dataflow/core";
+import { useInspector } from "./InspectorContext";
+import "./block-card.css";
 export type BlockShape = TLBaseShape<
   "block",
   {
@@ -55,15 +64,26 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
     node.setAttribute("rel", "noopener noreferrer");
   }
 });
-// Mesma gramática de referência do dataflow (dataflow/core.ts): um documento
-// com %refs% mostra o conteúdo resolvido quando fora de foco e a fonte crua
-// dentro do editor.
-const noteRefPattern = /%([A-Za-z0-9_-]+)((?:\.[\w-]+|\[\d+\])*)%/;
 // Notas renderizam markdown do conteúdo já resolvido pelo dataflow — valores
 // vindos de fetch/embed chegam aqui, então sanitizar antes do innerHTML é
 // obrigatório.
 function renderNoteMarkdown(source: string): string {
   return DOMPurify.sanitize(marked.parse(source) as string);
+}
+
+const blockKinds = {
+  idea: { label: "Documento", icon: FileText },
+  terminal: { label: "Terminal", icon: Terminal },
+  code: { label: "Componente", icon: Code2 },
+  mermaid: { label: "Mermaid", icon: GitBranch },
+  output: { label: "Saída", icon: Braces },
+  fetch: { label: "Requisição HTTP", icon: Globe },
+  embed: { label: "Página web", icon: AppWindow },
+} as const;
+const pendingDocumentEdit = new WeakMap<Editor, TLShapeId>();
+
+export function requestDocumentEditing(editor: Editor, id: TLShapeId) {
+  pendingDocumentEdit.set(editor, id);
 }
 export class BlockUtil extends BaseBoxShapeUtil<BlockShape> {
   static override type = "block" as const;
@@ -118,8 +138,11 @@ function Block({ shape }: { shape: BlockShape }) {
   const editor = useEditor(),
     p = shape.props;
   const data = useDataResolver();
-  const [noteFocused, setNoteFocused] = useState(false);
+  const { open: inspectorOpen, setOpen: setInspectorOpen } = useInspector();
+  const selected = useValue("block inspector selection", () => editor.getOnlySelectedShapeId() === shape.id, [editor, shape.id]);
+  const [noteEditing, setNoteEditing] = useState(false);
   const [docFocus, setDocFocus] = useState(0);
+  const noteEditButton = useRef<HTMLButtonElement>(null);
   const readonly = useValue("readonly", () => editor.getIsReadonly(), [editor]);
   const [pending, setPending] = useState<{command: string; cwd: string} | null>(null);
   const titleDraft = useRef("");
@@ -136,12 +159,26 @@ function Block({ shape }: { shape: BlockShape }) {
     () => (p.kind === "idea" && resolvedContent.ok ? renderNoteMarkdown(contentText) : ""),
     [p.kind, resolvedContent.ok, contentText],
   );
-  const hasRefs = noteRefPattern.test(unescapedContent);
+  const reference = `%${config(shape).id}%`;
+  const { label: kindLabel, icon: BlockIcon } = blockKinds[p.kind as keyof typeof blockKinds] ?? blockKinds.idea;
+  const title = p.title.trim() || kindLabel;
+  const distinctTitle = title.toLocaleLowerCase('pt-BR') !== kindLabel.toLocaleLowerCase('pt-BR');
   const confirmButton = useRef<HTMLButtonElement>(null);
-  const [editing, setEditing] = useState(false),
-    [confirm, setConfirm] = useState(false),
+  const [confirm, setConfirm] = useState(false),
     [running, setRunning] = useState(false);
-  const [refCopied, setRefCopied] = useState(false);
+  const [clipboard, setClipboard] = useState<{ source: 'reference' | 'content' | 'output'; successful: boolean } | null>(null);
+  const clipboardTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    if (p.kind !== 'idea' || pendingDocumentEdit.get(editor) !== shape.id) return;
+    pendingDocumentEdit.delete(editor);
+    if (!readonly) {
+      setNoteEditing(true);
+      setDocFocus(1);
+    }
+  }, [editor, p.kind, readonly, shape.id]);
+  useEffect(() => {
+    if (!selected) setNoteEditing(false);
+  }, [selected]);
   useEffect(() => {
     if (!confirm) return;
     const frame = requestAnimationFrame(() => confirmButton.current?.focus());
@@ -150,8 +187,6 @@ function Block({ shape }: { shape: BlockShape }) {
   const [output, setOutput] = useState(""),
     [result, setResult] = useState(""),
     [cancel, setCancel] = useState<null | (() => void)>(null);
-  const [previewSource, setPreviewSource] = useState(p.content),
-    [copied, setCopied] = useState(false);
   const activeRun = useRef<null | { write: (input: string) => Promise<unknown>; cancel: () => Promise<void> }>(null);
   const mounted = useRef(true);
   useEffect(() => {
@@ -186,20 +221,12 @@ function Block({ shape }: { shape: BlockShape }) {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      clearTimeout(clipboardTimer.current);
       void activeRun.current?.cancel().catch(() => {});
     };
   }, []);
   const update = (props: Partial<BlockShape["props"]>) =>
     editor.updateShape<BlockShape>({ id: shape.id, type: "block", props });
-  const preview = useMemo(() => {
-    if (p.kind !== "code") return { html: "", error: "" };
-    try {
-      const source = display(data.text(shape, previewSource));
-      return { html: buildPreview(source, p.language, data.input(shape)), error: "" };
-    } catch (e) {
-      return { html: "", error: String(e) };
-    }
-  }, [previewSource, p.language, p.kind, data, shape.id]);
   function prepareRun() {
     try { setPending({command:display(data.text(shape, p.content)),cwd:display(data.text(shape, p.cwd))}); setConfirm(true); }
     catch (e) { setResult(String(e)); }
@@ -266,142 +293,125 @@ function Block({ shape }: { shape: BlockShape }) {
     void activeRun.current.write(`${p.content}\n`).then(() => update({ content: "" })).catch((e) => setResult(String(e)));
   }
   function openDoc() {
-    setNoteFocused(true);
+    if (readonly) return;
+    editor.setCurrentTool("select");
+    editor.select(shape.id);
+    setNoteEditing(true);
     setDocFocus((n) => n + 1);
   }
-  function copyReference() {
-    void navigator.clipboard
-      .writeText(`%${config(shape).id}%`)
-      .then(() => {
-        setRefCopied(true);
-        setTimeout(() => setRefCopied(false), 1500);
-      })
-      .catch(() => {});
+  function closeDoc() {
+    setNoteEditing(false);
+    noteEditButton.current?.focus({ preventScroll: true });
+  }
+  function openInspector() {
+    editor.setCurrentTool("select");
+    editor.select(shape.id);
+    setInspectorOpen(true);
+  }
+  async function copy(text: string, source: 'reference' | 'content' | 'output') {
+    let successful = true;
+    try { await navigator.clipboard.writeText(text); }
+    catch { successful = false; }
+    if (!mounted.current) return;
+    clearTimeout(clipboardTimer.current);
+    setClipboard({ source, successful });
+    clipboardTimer.current = setTimeout(() => setClipboard(null), 1800);
   }
   // O corpo do bloco deixa o pointerdown subir para o tldraw (arrastar por
   // qualquer área), exceto quando o alvo é interativo — inputs, botões e o
   // editor de documento precisam do evento para focar/sem arrastar o shape.
   function bodyPointerDown(e: React.PointerEvent) {
-    let el = e.target instanceof HTMLElement ? e.target : null;
-    while (el && !el.classList.contains("block-body")) {
-      if (
-        el.tagName === "INPUT" ||
-        el.tagName === "TEXTAREA" ||
-        el.tagName === "SELECT" ||
-        el.tagName === "BUTTON" ||
-        el.isContentEditable ||
-        el.classList.contains("confirm-overlay")
-      ) {
-        e.stopPropagation();
-        return;
-      }
-      el = el.parentElement;
+    if (e.target instanceof Element && e.target.closest(
+      "input, textarea, select, button, a, summary, [contenteditable=true], .confirm-overlay, .block-readable",
+    )) {
+      e.stopPropagation();
     }
   }
   function copyContent() {
     const result = data.result(shape);
-    const text = result.ok ? display(result.value) : p.content;
-    void navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      })
-      .catch(() => setResult("Não foi possível copiar."));
+    void copy(result.ok ? display(result.value) : p.content, 'content');
   }
-  const icon =
-    p.kind === "fetch" ? <Globe size={14} /> : p.kind === "embed" ? (
-      <AppWindow size={14} />
-    ) : p.kind === "terminal" ? (
-      <Terminal size={14} />
-    ) : p.kind === "code" ? (
-      <Code2 size={14} />
-    ) : p.kind === "mermaid" ? (
-      <GitBranch size={14} />
-    ) : (
-      <FileText size={14} />
-    );
+  const copied = clipboard?.successful ? clipboard.source : null;
   return (
     <HTMLContainer
-      className={`block block-${p.kind}`}
+      className={`block block-${p.kind} board-block`}
       style={{ width: p.w, height: p.h }}
+      role="group"
+      aria-label={distinctTitle ? `${kindLabel}: ${title}` : title}
     >
       <div className="block-header">
-        <span className="block-symbol">{icon}</span>
-        {titleEditing ? (
-          <input
-            aria-label="Título do bloco"
-            ref={titleInput}
-            value={p.title}
-            onPointerDown={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                editor.setEditingShape(null);
-              }
+        <span className="block-symbol" aria-hidden="true"><BlockIcon size={15} /></span>
+        <div className="block-identity">
+          {(distinctTitle || p.kind === 'code') && <span className="block-tag">
+            {distinctTitle && kindLabel}{p.kind === 'code' && `${distinctTitle ? ' · ' : ''}${p.language.toUpperCase()}`}
+          </span>}
+          {titleEditing ? (
+            <input
+              aria-label="Título do bloco"
+              ref={titleInput}
+              value={p.title}
+              onPointerDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  editor.setEditingShape(null);
+                }
+              }}
+              onBlur={() => editor.setEditingShape(null)}
+              onChange={(e) => update({ title: e.target.value })}
+            />
+          ) : (
+            <span className="block-title" title={title}>{title}</span>
+          )}
+        </div>
+        <div className="block-header-actions" onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          {!readonly && <button
+            type="button"
+            className="block-copy"
+            title="Renomear bloco"
+            aria-label={`Renomear ${title}`}
+            onClick={() => {
+              editor.setCurrentTool("select");
+              editor.select(shape.id);
+              editor.setEditingShape(shape.id);
             }}
-            onBlur={() => editor.setEditingShape(null)}
-            onChange={(e) => update({ title: e.target.value })}
-          />
-        ) : (
-          <span className="block-title" title="Arraste para mover · duplo clique para renomear">
-            {p.title}
-          </span>
-        )}
-        <span className="block-tag">
-          {p.kind === "code"
-            ? p.language.toUpperCase()
-            : p.kind === "mermaid"
-              ? "DIAGRAM"
-              : p.kind === "terminal"
-                ? "LOCAL"
-                : p.kind === "output"
-                  ? "SNAPSHOT"
-                  : p.kind === "fetch" ? "REST" : p.kind === "embed" ? "WEB" : "DOC"}
-        </span>
-        <button
-          className="block-copy"
-          title="Copiar conteúdo do bloco"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={copyContent}
-        >
-          {copied ? <Check size={12} /> : <Copy size={12} />}
-        </button>
+          ><Pencil size={13} aria-hidden="true" /></button>}
+          <button type="button" className="block-copy" title="Copiar conteúdo do bloco" aria-label={`Copiar conteúdo de ${title}`} onClick={copyContent}>
+            {copied === 'content' ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
+          </button>
+        </div>
       </div>
       <div
         className="block-body"
         onPointerDown={bodyPointerDown}
-        onKeyDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === 'Escape' && !e.defaultPrevented && noteEditing && !e.nativeEvent.isComposing) closeDoc();
+        }}
         onWheel={(e) => e.stopPropagation()}
       >
-        {p.kind === 'fetch' && <FetchBlock shape={shape} />}
-        {p.kind === 'embed' && <EmbedBlock shape={shape} />}
-        {p.kind === "mermaid" && <MermaidBlock shape={shape} />}
+        {p.kind === 'fetch' && <FetchBlock shape={shape} readonly={readonly} />}
+        {p.kind === 'embed' && <EmbedBlock shape={shape} readonly={readonly} />}
+        {p.kind === "mermaid" && <MermaidBlock shape={shape} readonly={readonly} />}
         {p.kind === "idea" &&
-          (!readonly && (!hasRefs || noteFocused) ? (
+          (!readonly && noteEditing ? (
             <MarkdownDoc
               value={p.content}
               onChange={(markdown) => update({ content: markdown })}
-              onFocusChange={setNoteFocused}
               focusSignal={docFocus}
-              placeholder="Escreva o documento… markdown suportado"
+              placeholder="Escreva aqui…"
               ariaLabel="Conteúdo do documento"
             />
+          ) : !p.content.trim() ? (
+            <div className="block-empty">
+              <FileText size={22} aria-hidden="true" />
+              <strong>Documento em branco</strong>
+              {!readonly && <button type="button" className="ui-action" onClick={openDoc}><Pencil size={12} aria-hidden="true" /> Começar a escrever</button>}
+            </div>
           ) : resolvedContent.ok ? (
-            <>
-              {!readonly && (
-                <button className="note-edit" type="button" onClick={openDoc}>
-                  Editar documento
-                </button>
-              )}
-              <div
-                className="note-markdown"
-                onDoubleClick={!readonly ? openDoc : undefined}
-                dangerouslySetInnerHTML={{ __html: noteHtml }}
-              />
-            </>
+            <div className="note-markdown block-readable" dangerouslySetInnerHTML={{ __html: noteHtml }} />
           ) : (
-            <div className="note-markdown note-error">{contentText}</div>
+            <div className="note-markdown note-error block-readable">{contentText}</div>
           ))}
         {p.kind === "terminal" && (
           <>
@@ -416,7 +426,7 @@ function Block({ shape }: { shape: BlockShape }) {
                 aria-label="Diretório de trabalho"
                 placeholder="Diretório padrão"
                 value={p.cwd}
-                disabled={false}
+                readOnly={readonly}
                 onChange={(e) => update({ cwd: e.target.value })}
               />
             </div>
@@ -426,7 +436,7 @@ function Block({ shape }: { shape: BlockShape }) {
                 aria-label="Comando ou entrada do terminal"
                 spellCheck={false}
                 value={p.content}
-                disabled={false}
+                readOnly={readonly}
                 onKeyDown={(e) => {
                   if (running && e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -436,7 +446,7 @@ function Block({ shape }: { shape: BlockShape }) {
                 onChange={(e) => update({ content: e.target.value })}
               />
             </div>
-            <pre className="terminal-output">
+            <pre className="terminal-output block-readable">
               {output ||
                 (running
                   ? "Sessão ativa. Envie comandos, inputs ou Ctrl+C."
@@ -444,9 +454,9 @@ function Block({ shape }: { shape: BlockShape }) {
             </pre>
             {result && <div className="run-result">{result}</div>}
             <div className="block-actions">
-              <button disabled={!output || running} onClick={pin}>
-                <Copy size={12} />
-                Fixar output
+              <button disabled={readonly || !output || running} onClick={pin}>
+                <Pin size={12} aria-hidden="true" />
+                Fixar saída
               </button>
               {running ? (
                 <>
@@ -462,7 +472,7 @@ function Block({ shape }: { shape: BlockShape }) {
               ) : (
                 <button
                   className="primary-small"
-                  disabled={!p.content.trim() || !desktopAvailable}
+                  disabled={readonly || !p.content.trim() || !desktopAvailable}
                   onClick={prepareRun}
                 >
                   <Play size={12} />
@@ -508,135 +518,72 @@ function Block({ shape }: { shape: BlockShape }) {
         )}
         {p.kind === "output" && (
           <>
-            <pre className="saved-output">{contentText}</pre>
+            <pre className="saved-output block-readable">{contentText}</pre>
             <div className="block-actions output-actions">
-              <span className="output-origin" title={p.origin || "Output fixado no canvas"}>{p.origin || "Somente leitura"}</span>
-              <button
-                onClick={() =>
-                  void navigator.clipboard.writeText(p.content).then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  })
-                }
-              >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-                {copied ? "Copiado" : "Copiar"}
-              </button>
+              <span className="output-origin" title={p.origin || "Saída fixada no quadro"}>{p.origin || "Saída fixada no quadro"}</span>
+              {p.content !== contentText && <button type="button" onClick={() => void copy(p.content, 'output')}>
+                {copied === 'output' ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
+                {copied === 'output' ? "Copiada" : "Copiar fonte"}
+              </button>}
             </div>
           </>
         )}
-        {p.kind === "code" && (
-          <>
-            <div className="code-tabs" role="tablist" aria-label="Visualização do componente">
-              <button
-                type="button"
-                role="tab"
-                id={`preview-tab-${shape.id}`}
-                aria-selected={!editing}
-                aria-controls={`preview-panel-${shape.id}`}
-                tabIndex={!editing ? 0 : -1}
-                className={!editing ? "selected" : ""}
-                onClick={() => setEditing(false)}
-                onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setEditing(true); (event.currentTarget.nextElementSibling as HTMLButtonElement)?.focus(); } }}
-              >
-                Preview
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id={`code-tab-${shape.id}`}
-                aria-selected={editing}
-                aria-controls={`code-panel-${shape.id}`}
-                tabIndex={editing ? 0 : -1}
-                className={editing ? "selected" : ""}
-                onClick={() => setEditing(true)}
-                onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setEditing(false); (event.currentTarget.previousElementSibling as HTMLButtonElement)?.focus(); } }}
-              >
-                Código
-              </button>
-              <select
-                aria-label="Linguagem"
-                value={p.language}
-                onChange={(e) => update({ language: e.target.value })}
-              >
-                <option value="tsx">React / TSX</option>
-                <option value="html">HTML</option>
-              </select>
-              <button
-                className="refresh-preview"
-                onClick={() => {
-                  setPreviewSource(p.content);
-                  setEditing(false);
-                }}
-              >
-                <Play size={11} />
-                Renderizar
-              </button>
-            </div>
-            {editing ? (
-              <textarea
-                id={`code-panel-${shape.id}`}
-                role="tabpanel"
-                aria-labelledby={`code-tab-${shape.id}`}
-                className="code-input"
-                aria-label="Código do componente"
-                spellCheck={false}
-                value={p.content}
-                onChange={(e) => update({ content: e.target.value })}
-              />
-            ) : preview.error ? (
-              <pre id={`preview-panel-${shape.id}`} role="tabpanel" aria-labelledby={`preview-tab-${shape.id}`} className="preview-error">{preview.error}</pre>
-            ) : (
-              <iframe
-                id={`preview-panel-${shape.id}`}
-                aria-labelledby={`preview-tab-${shape.id}`}
-                title={p.title}
-                sandbox="allow-scripts"
-                srcDoc={preview.html}
-              />
-            )}
-            <div className="preview-footer">
-              <span className="status-dot active" />
-              Preview isolado<span>Sem rede · sem acesso ao host</span>
-            </div>
-          </>
-        )}
+        {p.kind === "code" && <ComponentBlock shape={shape} title={title} data={data} />}
       </div>
-      {!['fetch', 'embed'].includes(p.kind) && (
+      <div className="block-footer" onPointerDown={bodyPointerDown} onKeyDown={(e) => e.stopPropagation()}>
         <button
           type="button"
           className="element-reference"
-          title="Copiar a referência deste elemento para colar em outro"
-          aria-label={`Copiar referência %${config(shape).id}%`}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={copyReference}
+          title={`Copiar referência ${reference}`}
+          aria-label={`Copiar referência ${reference}`}
+          onClick={() => void copy(reference, 'reference')}
         >
-          {refCopied ? <>%{config(shape).id}% <Check size={11} /> copiada</> : `%${config(shape).id}%`}
+          {copied === 'reference' ? <Check size={13} aria-hidden="true" /> : <Link2 size={13} aria-hidden="true" />}
+          <span>{copied === 'reference' ? 'Copiada' : reference}</span>
         </button>
-      )}
+        <div className="block-footer-actions">
+          {p.kind === 'idea' && !readonly && <button type="button" ref={noteEditButton} className="block-footer-action" aria-label={noteEditing ? "Concluir edição do documento" : "Editar documento"} title={noteEditing ? "Concluir edição" : "Editar documento"} onClick={noteEditing ? closeDoc : openDoc}>
+            {noteEditing ? <Check size={13} aria-hidden="true" /> : <Pencil size={13} aria-hidden="true" />}
+            <span>{noteEditing ? 'Concluir' : 'Editar'}</span>
+          </button>}
+          <button type="button" className="block-footer-action" title="Dados do elemento" aria-label="Dados do elemento" data-block-inspector={shape.id} aria-controls="element-inspector" aria-expanded={selected && inspectorOpen} onClick={openInspector}>
+            <SlidersHorizontal size={13} aria-hidden="true" /> <span>Dados</span>
+          </button>
+        </div>
+        <span className="block-copy-feedback" data-copy-error={clipboard?.successful === false || undefined} role="status">{clipboard && (clipboard.successful ? (clipboard.source === 'reference' ? 'Referência copiada' : 'Conteúdo copiado') : 'Não foi possível copiar')}</span>
+      </div>
     </HTMLContainer>
   );
 }
 
-function MermaidBlock({ shape }: { shape: BlockShape }) {
+function MermaidBlock({ shape, readonly }: { shape: BlockShape; readonly: boolean }) {
   const editor = useEditor();
-  const [source, setSource] = useState(shape.props.content);
+  const source = shape.props.content;
   const [svg, setSvg] = useState("");
   const [error, setError] = useState("");
   const [converting, setConverting] = useState(false);
-  const render = async (value: string) => {
-    try {
-      const mermaid = (await import("mermaid")).default;
-      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
-      const result = await mermaid.render(`metalboard-mermaid-${shape.id.replace(/[^a-zA-Z0-9]/g, "")}`, value);
-      setSvg(result.svg);
-      setError("");
-    } catch (e) {
-      setSvg("");
-      setError(String(e).replace(/^Error:\s*/, ""));
+  const [renderedSource, setRenderedSource] = useState<string | null>(null);
+  useEffect(() => {
+    let current = true;
+    async function render() {
+      try {
+        const mermaid = (await import("mermaid")).default;
+        if (!current) return;
+        mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
+        const result = await mermaid.render(`metalboard-mermaid-${shape.id.replace(/[^a-zA-Z0-9]/g, "")}`, source);
+        if (!current) return;
+        setSvg(result.svg);
+        setError("");
+      } catch (e) {
+        if (!current) return;
+        setSvg("");
+        setError(String(e).replace(/^Error:\s*/, ""));
+      }
+      setRenderedSource(source);
     }
-  };
-  useEffect(() => { void render(source); }, [source]);
+    const timer = source.trim() ? setTimeout(() => void render(), 160) : undefined;
+    return () => { current = false; clearTimeout(timer); };
+  }, [shape.id, source]);
   async function convert() {
     setConverting(true);
     try {
@@ -655,26 +602,29 @@ function MermaidBlock({ shape }: { shape: BlockShape }) {
       setConverting(false);
     }
   }
+  const hasSource = !!source.trim();
+  const rendering = hasSource && renderedSource !== source;
   return <div className="mermaid-editor">
     <section className="mermaid-pane mermaid-pane--source">
-      <div className="mermaid-pane-header"><span>Fonte</span><code>MERMAID</code></div>
+      <div className="mermaid-pane-header"><span>Código do diagrama</span></div>
       <textarea
         aria-label="Código Mermaid"
         className="mermaid-source"
         value={source}
         spellCheck={false}
-        onChange={(e) => { setSource(e.target.value); editor.updateShape<BlockShape>({ id: shape.id, type: "block", props: { content: e.target.value } }); }}
+        readOnly={readonly}
+        placeholder="flowchart LR"
+        onChange={(e) => editor.updateShape<BlockShape>({ id: shape.id, type: "block", props: { content: e.target.value } })}
       />
     </section>
     <section className="mermaid-pane mermaid-pane--preview">
-      <div className="mermaid-pane-header"><span>Preview</span><em className={error ? 'is-error' : 'is-ready'}>{error ? 'Erro de sintaxe' : 'Sincronizado'}</em></div>
-      {error ? <div className="mermaid-error" role="alert">{error}</div> : <div className="mermaid-preview" dangerouslySetInnerHTML={{ __html: svg }} />}
+      <div className="mermaid-pane-header"><span>Visualização</span><em role="status" className={error && !rendering ? 'is-error' : undefined}>{!hasSource ? 'Aguardando código' : rendering ? 'Atualizando…' : error ? 'Revise o código' : 'Atualizada'}</em></div>
+      {!hasSource ? <div className="block-empty">O diagrama aparece aqui.</div> : error && !rendering ? <div className="mermaid-error block-readable" role="alert">{error}</div> : <div className="mermaid-preview" dangerouslySetInnerHTML={{ __html: svg }} />}
     </section>
     <div className="block-actions mermaid-actions">
-      <span>Gera formas editáveis no board</span>
-      <button className="ui-action ui-action--primary" disabled={converting || !!error} aria-busy={converting} onClick={() => void convert()}>
-        <GitBranch size={12} />
-        {converting ? "Convertendo…" : "Transformar no canvas"}
+      <button className="ui-action ui-action--primary" disabled={readonly || !hasSource || rendering || converting || !!error} aria-busy={converting} onClick={() => void convert()}>
+        <GitBranch size={12} aria-hidden="true" />
+        {converting ? "Criando formas…" : "Criar formas editáveis"}
       </button>
     </div>
   </div>;

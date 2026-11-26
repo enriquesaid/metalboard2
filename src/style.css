@@ -295,17 +295,8 @@ footer > span {
   border-radius: var(--r-sm);
   padding: 5px 8px;
 }
-.app-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: calc(var(--z-toast) + 10);
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: color-mix(in srgb, var(--shadow) 52%, transparent);
-}
 .app-dialog {
-  width: min(430px, 100%);
+  width: min(430px, calc(100% - 32px));
   padding: 22px;
   border: 1px solid var(--line-3);
   border-radius: var(--r-lg);
@@ -315,7 +306,7 @@ footer > span {
 }
 .app-dialog h2 { margin: 0 0 10px; font-size: var(--text-lg); }
 .app-dialog p { margin: 0; color: var(--ink-2); line-height: 1.5; }
-.app-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.app-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 22px; }
 .app-dialog-actions button { padding: 8px 12px; border: 1px solid var(--line-3); border-radius: var(--r-md); }
 .block {
   border: 1px solid var(--line-2);
@@ -778,16 +769,6 @@ footer > span {
   border: 0;
   background: var(--canvas);
 }
-.code-input {
-  padding: 16px;
-  flex: 1;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  line-height: 1.65;
-  color: var(--accent);
-  tab-size: 2;
-  background: var(--paper-input);
-}
 .preview-footer {
   padding: 10px 14px;
   display: flex;
@@ -795,10 +776,6 @@ footer > span {
   gap: 6px;
   border-top: 1px solid var(--line-2);
   font-size: var(--text-2xs);
-  color: var(--ink-3);
-}
-.preview-footer > span:last-child {
-  margin-left: auto;
   color: var(--ink-3);
 }
 .preview-error {

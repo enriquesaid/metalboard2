@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import './landing.css';
 
 const examples = [
-  {id:'checkout', label:'Diagnóstico de checkout', detail:'Do evento à hipótese. Do dado à interface.', image:'/marketing/checkout.jpg', alt:'Board de diagnóstico de checkout com contexto, eventos por dispositivo, funil React interativo, plano de verificação e decisão conectados.'},
-  {id:'suporte', label:'Triagem de suporte', detail:'Da fila ao responsável. Com contexto para agir.', image:'/marketing/suporte.jpg', alt:'Board de triagem de suporte com chamados, política de SLA, fila React interativa e passagem de turno conectados.'},
+  {id:'checkout', label:'Diagnóstico de checkout', detail:'Do evento à hipótese. Do dado à interface.', image:'/marketing/checkout.jpg', alt:'Eventos de checkout conectados ao funil por dispositivo, à hipótese sobre o formulário de endereço e ao próximo teste.'},
+  {id:'suporte', label:'Triagem de suporte', detail:'Da fila ao responsável. Com contexto para agir.', image:'/marketing/suporte.jpg', alt:'Dados dos chamados conectados à fila com filtro de prioridade, à escolha do primeiro atendimento e à passagem de turno.'},
 ];
 export default function Landing() {
   const [selected, setSelected] = useState(0);
@@ -20,7 +20,7 @@ export default function Landing() {
     <header className="promo-nav">
       <a href="/apresentacao" className="promo-brand" aria-label="Metalboard — apresentação"><img src="/brand/logo.svg" width="154" height="19" alt="Metalboard" /></a>
       <span className="promo-edition"><i aria-hidden="true" /> UM ESPAÇO PARA CONSTRUIR</span>
-      <a className="promo-open" href="/">Abrir meu board <span aria-hidden="true">↗</span></a>
+      <a className="promo-open" href="/?board">Abrir meu board <span aria-hidden="true">↗</span></a>
     </header>
     <main className="promo-hero">
       <div className="promo-intro">
@@ -29,6 +29,8 @@ export default function Landing() {
           <p>Conecte ideias, dados e código em um canvas infinito. Teste uma hipótese, veja o resultado e continue de onde o raciocínio parou.</p>
           <a className="promo-cta" href={`/?demo=${example.id}`}>Explorar este exemplo <span aria-hidden="true">↗</span></a>
           <small>Demo no navegador. Terminal e APIs no desktop.</small>
+          <a className="promo-download" href="/downloads/Metalboard-0.1.0-mac-arm64.zip" download>Baixar para Mac <span aria-hidden="true">↓</span></a>
+          <small>macOS · Apple Silicon · .zip</small>
         </div>
       </div>
       <div className="promo-casebar">

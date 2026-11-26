@@ -1,99 +1,219 @@
 import type { Editor, TLShapePartial } from 'tldraw';
+import type { OutputConfig } from './dataflow/core';
 import type { BlockShape } from './shapes';
 
 export type DemoId = 'checkout' | 'suporte';
+
 export const demoNames: Record<DemoId, string> = {
-  checkout: 'Checkout · da hipótese à decisão',
-  suporte: 'Suporte · da fila ao plano de ação',
+  checkout: 'Diagnóstico de checkout',
+  suporte: 'Triagem de suporte',
 };
+
+export const demoTips: Record<DemoId, string> = {
+  checkout: 'Compare Celular e Desktop no Funil de checkout. Abra Dados no bloco para ver %checkout% na entrada.',
+  suporte: 'Ative Só P1 na Fila de suporte. Abra Dados no bloco para ver %tickets% na entrada.',
+};
+
 export function demoFromSearch(search: string): DemoId | undefined {
   const value = new URLSearchParams(search).get('demo');
   return value === 'checkout' || value === 'suporte' ? value : undefined;
 }
 
-// Synthetic, self-contained fixtures. No customer data or simulated executions.
-// The snapshots feed the real data resolver and React preview through %refs%.
 export const checkoutData = {
   period: 'Semana de demonstração',
   mobile: { cart: 2400, address: 1800, payment: 960, paid: 864 },
   desktop: { cart: 1600, address: 1360, payment: 1120, paid: 1064 },
-  findings: { step: 'Endereço → pagamento', mobileDrop: 840, owner: 'Produto + Engenharia' },
+  findings: {
+    step: 'Endereço → pagamento',
+    owner: 'Produto e Engenharia',
+    action: 'Testar a validação do CEP no celular.',
+  },
 };
+
 export const supportData = {
-  window: 'Turno de demonstração',
-  tickets: [
-    { id: 'SUP-241', subject: 'Cobrança duplicada', team: 'Billing', priority: 'P1', age: 74 },
-    { id: 'SUP-242', subject: 'Login via SSO indisponível', team: 'Identity', priority: 'P1', age: 48 },
-    { id: 'SUP-243', subject: 'Exportação CSV incompleta', team: 'Dados', priority: 'P2', age: 135 },
-    { id: 'SUP-244', subject: 'Convite não recebido', team: 'Identity', priority: 'P2', age: 32 },
-    { id: 'SUP-245', subject: 'Alterar plano da equipe', team: 'Billing', priority: 'P3', age: 18 },
-  ],
   sla: { P1: 60, P2: 240, P3: 480 },
-  next: { ticket: 'SUP-241', team: 'Billing', action: 'Verificar idempotência da cobrança' },
+  next: { ticket: 'SUP-241', team: 'Cobrança', action: 'Verificar se a cobrança foi processada duas vezes.' },
+  tickets: [
+    { id: 'SUP-241', subject: 'Cobrança duplicada', team: 'Cobrança', priority: 'P1', age: 74 },
+    { id: 'SUP-242', subject: 'Login via SSO indisponível', team: 'Acesso', priority: 'P1', age: 48 },
+    { id: 'SUP-243', subject: 'Exportação CSV incompleta', team: 'Dados', priority: 'P2', age: 135 },
+    { id: 'SUP-244', subject: 'Convite não recebido', team: 'Acesso', priority: 'P2', age: 32 },
+    { id: 'SUP-245', subject: 'Alterar plano da equipe', team: 'Cobrança', priority: 'P3', age: 18 },
+  ],
 };
 
 const previewStyles = `
   const css = {
-    wrap: {padding: '18px', fontSize: 12, lineHeight: 1.4},
-    label: {fontSize: 10, color: 'var(--dim)', letterSpacing: 1.2, textTransform: 'uppercase'},
-    title: {fontSize: 24, fontWeight: 500, letterSpacing: -1, margin: '8px 0 18px'},
-    line: {borderTop: '1px solid var(--dim)', opacity: .25, margin: '18px 0'},
-    button: {background: 'var(--key)', color:'var(--key-ink)', border:'1px solid var(--key-edge)', borderRadius:4, padding:'6px 10px', fontSize:11, cursor:'pointer'},
+    wrap: { padding: 16, fontSize: 13, lineHeight: 1.4, overflowWrap: 'anywhere' },
+    heading: { fontSize: 23, fontWeight: 500, letterSpacing: -1, margin: '0 0 12px', lineHeight: 1.15 },
+    label: { color: 'var(--dim)', fontSize: 12 },
+    filters: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+    button: {
+      minHeight: 36, border: '1px solid var(--dim)', borderRadius: 4,
+      padding: '6px 10px', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap'
+    },
+    metrics: {
+      display: 'flex', flexWrap: 'wrap', gap: '4px 20px',
+      padding: '0 0 10px', borderBottom: '1px solid var(--dim)', marginBottom: 12
+    },
+    number: { fontSize: 25, fontWeight: 600, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' },
   };
+  const number = value => value.toLocaleString('pt-BR');
+  const choiceStyle = active => ({
+    ...css.button,
+    color: active ? 'var(--key-ink)' : 'var(--ink)',
+    background: active ? 'var(--key)' : 'var(--paper)',
+    borderColor: active ? 'var(--key-edge)' : 'var(--dim)',
+  });
 `;
-export const checkoutPreview = `function App() {
+
+export const checkoutPreview = `function App({ input }) {
   ${previewStyles}
   const [device, setDevice] = React.useState('mobile');
-  const data = input[device];
-  const percent = n => (100 * n / data.cart).toFixed(1).replace('.', ',');
-  const steps = [['Carrinho',data.cart],['Endereço',data.address],['Pagamento',data.payment],['Concluído',data.paid]];
+  const data = input?.[device];
+  if (!data?.cart) return <p style={css.wrap}>Conecte os dados de checkout na entrada do componente.</p>;
+
+  const steps = [['Carrinho', data.cart], ['Endereço', data.address], ['Pagamento', data.payment], ['Concluído', data.paid]];
+  const formatRate = n => (n / data.cart).toLocaleString('pt-BR', { style: 'percent', maximumFractionDigits: 1 });
+  const drop = data.address - data.payment;
+
   return <div style={css.wrap}>
-    <div style={css.label}>ANÁLISE DE FUNIL / DADOS DE DEMONSTRAÇÃO</div>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}><h1 style={css.title}>Onde o fluxo quebra?</h1><button style={css.button} onClick={()=>setDevice(device==='mobile'?'desktop':'mobile')}>{device==='mobile'?'Mobile':'Desktop'} ↔</button></div>
-    <div style={{display:'flex',gap:34,marginBottom:24}}><div><div style={{fontSize:36,letterSpacing:-2}}>{percent(data.paid)}%</div><div style={css.label}>conversão final</div></div><div><div style={{fontSize:36,letterSpacing:-2}}>{data.cart.toLocaleString('pt-BR')}</div><div style={css.label}>carrinhos iniciados</div></div></div>
-    {steps.map(([label,value],i)=><div key={label} style={{margin:'12px 0'}}><div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:5}}><span>0{i+1} / {label}</span><span>{value.toLocaleString('pt-BR')} · {percent(value)}%</span></div><div style={{height:12,background:'color-mix(in srgb, var(--ink) 8%, transparent)'}}><div style={{width:percent(value).replace(',','.')+'%',height:'100%',background:i===2?'var(--key)':'var(--ink)'}}/></div></div>)}
-    <div style={{...css.label,marginTop:22}}>Fonte conectada: %checkout.period%</div>
-  </div>;
-}`;
-export const supportPreview = `function App() {
-  ${previewStyles}
-  const [onlyUrgent,setOnlyUrgent] = React.useState(false);
-  const tickets = input.tickets.filter(t=>!onlyUrgent || t.priority==='P1');
-  const late = input.tickets.filter(t=>t.age > input.sla[t.priority]);
-  return <div style={css.wrap}>
-    <div style={css.label}>OPERAÇÃO DE SUPORTE / DEMONSTRAÇÃO</div>
-    <h1 style={css.title}>Prioridade antes de volume.</h1>
-    <div style={{display:'flex',gap:32,marginBottom:20}}>{[[input.tickets.length,'na fila'],[input.tickets.filter(t=>t.priority==='P1').length,'prioridade P1'],[late.length,'fora do SLA']].map(([n,l])=><div key={l}><div style={{fontSize:34,color:l==='fora do SLA'?'var(--key)':'var(--ink)'}}>{String(n).padStart(2,'0')}</div><div style={css.label}>{l}</div></div>)}</div>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><span style={css.label}>Fila por ordem de prioridade</span><button style={css.button} onClick={()=>setOnlyUrgent(!onlyUrgent)}>{onlyUrgent?'Ver todos':'Só P1'}</button></div>
-    {tickets.map(t=><div key={t.id} style={{display:'grid',gridTemplateColumns:'34px 1fr auto',gap:10,borderTop:'1px solid color-mix(in srgb,var(--ink) 15%,transparent)',padding:'12px 0',alignItems:'center'}}><span style={{color:t.priority==='P1'?'var(--key)':'var(--dim)'}}>{t.priority}</span><div><div style={{fontSize:12}}>{t.subject}</div><div style={{fontSize:10,color:'var(--dim)',marginTop:3}}>{t.id} / {t.team}</div></div><span style={{fontSize:11,color:t.age>input.sla[t.priority]?'var(--key)':'var(--dim)'}}>{t.age} min</span></div>)}
+    <h1 style={css.heading}>Conversão por etapa</h1>
+    <div role="group" aria-label="Dispositivo" style={css.filters}>
+      <button type="button" aria-pressed={device === 'mobile'} style={choiceStyle(device === 'mobile')} onClick={() => setDevice('mobile')}>Celular</button>
+      <button type="button" aria-pressed={device === 'desktop'} style={choiceStyle(device === 'desktop')} onClick={() => setDevice('desktop')}>Desktop</button>
+    </div>
+    <div aria-live="polite">
+      <div style={css.metrics}>
+        <div><div style={css.number}>{formatRate(data.paid)}</div><div style={css.label}>conversão final</div></div>
+        <div><div style={css.number}>{number(drop)}</div><div style={css.label}>saíram após o endereço</div></div>
+      </div>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {steps.map(([label, value]) => <li key={label} style={{ marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+            <span>{label}</span><span>{number(value)} · {formatRate(value)}</span>
+          </div>
+          <div aria-hidden="true" style={{ height: 7, background: 'color-mix(in srgb, var(--ink) 12%, var(--paper))' }}>
+            <div style={{ width: 100 * value / data.cart + '%', height: '100%', background: label === 'Pagamento' ? 'var(--key)' : 'var(--ink)' }} />
+          </div>
+        </li>)}
+      </ul>
+    </div>
+    <div style={{ ...css.label, marginTop: 11 }}>{input.period} · dados fictícios</div>
   </div>;
 }`;
 
-type DemoShape = Omit<TLShapePartial<BlockShape>, 'id'>;
-function block(alias: string, kind: string, title: string, content: string, x: number, y: number, w: number, h: number, input = '', json = false): DemoShape {
-  return { type: 'block', x, y, props: {kind, title, content, w, h, origin: 'Dados sintéticos · exemplo demonstrativo'}, meta: { metalboard: {id: alias, input, output: {parseJson: json}} } };
+export const supportPreview = `function App({ input }) {
+  ${previewStyles}
+  const [onlyUrgent, setOnlyUrgent] = React.useState(false);
+  if (!Array.isArray(input?.tickets) || !input?.sla) return <p style={css.wrap}>Conecte os dados da fila na entrada do componente.</p>;
+
+  const ordered = [...input.tickets].sort((a, b) => a.priority.localeCompare(b.priority) || b.age - a.age);
+  const isUrgent = ticket => ticket.priority === 'P1';
+  const isLate = ticket => ticket.age > input.sla[ticket.priority];
+  const visible = onlyUrgent ? ordered.filter(isUrgent) : ordered;
+
+  return <div style={css.wrap}>
+    <h1 style={css.heading}>Chamados por prioridade</h1>
+    <div role="group" aria-label="Filtrar chamados" style={css.filters}>
+      <button type="button" aria-pressed={!onlyUrgent} style={choiceStyle(!onlyUrgent)} onClick={() => setOnlyUrgent(false)}>Todos</button>
+      <button type="button" aria-pressed={onlyUrgent} style={choiceStyle(onlyUrgent)} onClick={() => setOnlyUrgent(true)}>Só P1</button>
+    </div>
+    <div style={{ ...css.label, marginBottom: 7 }} aria-live="polite">
+      {visible.length} de {ordered.length} chamados · {visible.filter(isLate).length} fora do prazo
+    </div>
+    <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      {visible.map(ticket => <li key={ticket.id} style={{
+        display: 'grid', gridTemplateColumns: '2em minmax(0, 1fr) auto', gap: 8, alignItems: 'baseline',
+        padding: '6px 0', borderTop: '1px solid color-mix(in srgb, var(--ink) 25%, var(--paper))'
+      }}>
+        <strong>{ticket.priority}</strong>
+        <div>{ticket.subject}<div style={css.label}>{ticket.id} · {ticket.team}</div></div>
+        <div style={{ textAlign: 'right' }}>
+          <span>{number(ticket.age)} min</span>
+          {isLate(ticket) && <div style={{ ...css.label, color: 'var(--key-edge)' }}>Prazo vencido</div>}
+        </div>
+      </li>)}
+    </ul>
+  </div>;
+}`;
+
+type DemoShape = Omit<TLShapePartial<BlockShape>, 'id'> & {
+  x: number;
+  y: number;
+  props: Partial<BlockShape['props']> & Pick<BlockShape['props'], 'kind' | 'w' | 'h'>;
+};
+
+type DemoSettings = { input?: string; output?: Partial<OutputConfig>; origin?: string };
+
+function block(
+  alias: string,
+  kind: string,
+  title: string,
+  content: string,
+  bounds: [x: number, y: number, w: number, h: number],
+  { input = '', output = {}, origin = '' }: DemoSettings = {},
+): DemoShape {
+  const [x, y, w, h] = bounds;
+  return { type: 'block', x, y, props: { kind, title, content, w, h, origin }, meta: { metalboard: { id: alias, input, output } } };
 }
+
+const layout = {
+  brief: [0, 0, 286, 190],
+  source: [0, 236, 286, 284],
+  preview: [360, 0, 414, 520],
+  decision: [848, 0, 288, 242],
+  handoff: [848, 284, 288, 236],
+} satisfies Record<string, [number, number, number, number]>;
+
 export function demoShapes(id: DemoId): DemoShape[] {
   if (id === 'checkout') return [
-    block('brief', 'idea', '01 / A pergunta certa', '## Por que o mobile perde vendas?\n\nO time percebeu uma diferença entre mobile e desktop. Antes de redesenhar o checkout, precisamos localizar a etapa de maior abandono.\n\n**Entrega:** uma hipótese testável, com evidência e critério de aceite.\n\n*Caso de uso com dados sintéticos.*', 0, 0, 300, 300),
-    block('checkout', 'output', '02 / Eventos por dispositivo', JSON.stringify(checkoutData, null, 2), 360, 0, 360, 350, '', true),
-    block('funnel', 'code', '03 / Funil interativo', checkoutPreview, 780, 0, 520, 510, '%checkout%'),
-    block('criteria', 'idea', '05 / Plano de verificação', '## Transformar hipótese em teste\n\n1. Reproduzir o formulário em 375 px.\n2. Verificar teclado, CEP e mensagens de erro.\n3. Preservar os dados ao voltar uma etapa.\n\n**Aceite:** concluir o fluxo com teclado e leitor de tela.\n\n**Depois:** comparar o funil por dispositivo.', 0, 360, 300, 330),
-    block('decision', 'idea', '04 / Evidência → decisão', '## Investigar o endereço\n\n**Etapa:** %checkout.findings.step%\n\nNo recorte mobile, **%checkout.findings.mobileDrop% carrinhos** saem nessa passagem.\n\n**Próxima ação:** testar a validação do CEP antes de alterar o pagamento.\n\n**Responsáveis:** %checkout.findings.owner%', 360, 410, 360, 280, '%checkout%'),
-    block('handoff', 'output', '06 / Handoff para o próximo ciclo', 'INVESTIGAÇÃO → CORREÇÃO → VERIFICAÇÃO\n\nFoco: %checkout.findings.step%\nDono: %checkout.findings.owner%\n\nRegistrar o resultado neste mesmo board.', 780, 555, 520, 165),
+    block('brief', 'idea', 'Pergunta do time',
+      '## Onde o checkout perde vendas?\n\nCompare celular e desktop no funil para escolher o primeiro problema a investigar.',
+      layout.brief),
+    block('checkout', 'output', 'Eventos de checkout', JSON.stringify(checkoutData, null, 2), layout.source,
+      { output: { parseJson: true }, origin: 'JSON · dados fictícios' }),
+    block('funnel', 'code', 'Funil de checkout', checkoutPreview, layout.preview,
+      { input: '%checkout%', output: { source: 'input' } }),
+    block('decision', 'idea', 'Hipótese de abandono',
+      '## %funnel.findings.step%\n\nNo celular, **%funnel.mobile.address%** carrinhos chegaram ao endereço. **%funnel.mobile.payment%** avançaram.\n\nVale investigar o formulário de endereço.',
+      layout.decision, { output: { source: 'value', value: '%funnel.findings.action%' } }),
+    block('handoff', 'idea', 'Próximo teste',
+      '## Experimento\n\n**Ação:** %decision%\n\n**Verificação:** teste o formulário com e sem leitor de tela. Compare o avanço até o pagamento.',
+      layout.handoff),
   ];
   return [
-    block('brief', 'idea', '01 / Contexto do plantão', '## Uma fila. Um plano claro.\n\nO time começa o turno com chamados de cobrança, acesso e exportação. É preciso separar urgência de ordem de chegada.\n\n**Entrega:** priorizar, atribuir responsáveis e preparar a passagem de turno.\n\n*Chamados fictícios para demonstração.*', 0, 0, 300, 300),
-    block('tickets', 'output', '02 / Snapshot da fila', JSON.stringify(supportData, null, 2), 360, 0, 360, 350, '', true),
-    block('queue', 'code', '03 / Fila acionável', supportPreview, 780, 0, 520, 530, '%tickets%'),
-    block('policy', 'idea', '05 / Regra de atendimento', '## O que atender primeiro?\n\n**P1 · até %tickets.sla.P1% min**\nCobrança indevida ou acesso bloqueado.\n\n**P2 · até %tickets.sla.P2% min**\nFunção prejudicada com alternativa.\n\n**P3 · até %tickets.sla.P3% min**\nDúvidas e alterações de plano.\n\nSLA ilustrativo deste exercício.', 0, 360, 300, 330),
-    block('action', 'idea', '04 / Próxima ação', '## %tickets.next.ticket% primeiro\n\n**Equipe:** %tickets.next.team%\n\n%tickets.next.action%.\n\nConfirmar o evento no provedor antes de propor qualquer estorno.\n\nDepois, investigar o SSO com a equipe de Identity.', 360, 410, 360, 280, '%tickets%'),
-    block('handoff', 'output', '06 / Passagem de turno', 'PRÓXIMO RESPONSÁVEL / %tickets.next.team%\nChamado: %tickets.next.ticket%\nAção: %tickets.next.action%', 780, 590, 520, 100),
+    block('brief', 'idea', 'Pergunta do plantão',
+      '## Qual chamado vem primeiro?\n\nFiltre os chamados P1 para identificar o que já passou do prazo.',
+      layout.brief),
+    block('tickets', 'output', 'Chamados recebidos', JSON.stringify(supportData, null, 2), layout.source,
+      { output: { parseJson: true }, origin: 'JSON · chamados fictícios' }),
+    block('queue', 'code', 'Fila de suporte', supportPreview, layout.preview,
+      { input: '%tickets%', output: { source: 'input' } }),
+    block('action', 'idea', 'Prioridade do plantão',
+      '## %queue.next.ticket% primeiro\n\n**%queue.tickets[0].subject%** aguarda há **%queue.tickets[0].age% min**. O prazo de P1 é de **%queue.sla.P1% min**.\n\n**Responsável:** %queue.next.team%.',
+      layout.decision, { output: { source: 'value', value: '%queue.next.action%' } }),
+    block('handoff', 'idea', 'Passagem de turno',
+      '## Primeiro atendimento\n\n%action%\n\nRegistre a conclusão no chamado antes de passar para o próximo P1.',
+      layout.handoff),
   ];
 }
+
 export function seedDemo(editor: Editor, id: DemoId) {
   if (editor.getCurrentPageShapes().length) return;
-  editor.createShapes<BlockShape>(demoShapes(id));
-  editor.selectNone();
-  editor.zoomToBounds({x: -30, y: -30, w: 1360, h: 820}, {inset: 16, targetZoom: 1});
+  editor.run(() => {
+    editor.createShapes<BlockShape>(demoShapes(id));
+    editor.selectNone();
+  }, { history: 'ignore' });
+
+  const viewportWidth = editor.getViewportScreenBounds().w;
+  const compact = viewportWidth < 900;
+  const [x, y, w, h] = layout.preview;
+  const bounds = compact ? { x, y, w, h } : editor.getCurrentPageBounds();
+  if (bounds) {
+    editor.zoomToBounds(
+      { x: bounds.x, y: bounds.y - 16, w: bounds.w, h: bounds.h + (viewportWidth <= 620 ? 180 : 90) },
+      { inset: compact ? 20 : 48, targetZoom: 1 },
+    );
+  }
 }

@@ -10,6 +10,8 @@ import {
   Editor,
   defaultValueCtx,
   editorViewCtx,
+  editorViewOptionsCtx,
+  serializerCtx,
   rootAttrsCtx,
   rootCtx,
   type CmdKey,
@@ -32,8 +34,8 @@ import "@milkdown/kit/prose/view/style/prosemirror.css";
 import { clipboard } from "@milkdown/kit/plugin/clipboard";
 import { cursor } from "@milkdown/kit/plugin/cursor";
 import { history } from "@milkdown/kit/plugin/history";
-import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
-import { callCommand, getMarkdown, insert, replaceAll } from "@milkdown/kit/utils";
+import { Plugin } from "@milkdown/kit/prose/state";
+import { $prose, callCommand, insert, replaceAll } from "@milkdown/kit/utils";
 import {
   Bold,
   Code,
@@ -72,6 +74,7 @@ export function MarkdownDoc({
   const rootRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
   const emitted = useRef(value);
+  const externalUpdate = useRef(false);
   const [focused, setFocused] = useState(false);
   const focusSignalRef = useRef(focusSignal);
   const onChangeRef = useRef(onChange);
@@ -79,56 +82,70 @@ export function MarkdownDoc({
   onChangeRef.current = onChange;
 
   useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
+    const host = rootRef.current;
+    if (!host) return;
+    const root = document.createElement("div");
+    host.appendChild(root);
+    let disposed = false;
+    // Publish actual document edits immediately so switching pages or exporting
+    // never races a pending Markdown debounce. Keep untouched source verbatim.
+    const syncDocument = $prose(ctx => new Plugin({
+      view: () => ({
+        update(view, previous) {
+          if (disposed || externalUpdate.current || previous.doc.eq(view.state.doc)) return;
+          const markdown = ctx.get(serializerCtx)(view.state.doc);
+          emitted.current = markdown;
+          onChangeRef.current(markdown);
+        },
+      }),
+    }));
     const editor = Editor.make()
       .config((ctx) => {
         ctx.set(rootCtx, root);
         ctx.set(defaultValueCtx, value);
+        ctx.set(editorViewOptionsCtx, {
+          attributes: { role: "textbox", "aria-multiline": "true", "aria-label": ariaLabel },
+        });
         // rootAttrs aplica setAttribute na div .milkdown e substituiria a
         // classe padrão — "milkdown" precisa voltar junto com as classes
         // de estilo reaproveitadas da nota estática.
         ctx.set(rootAttrsCtx, { class: "milkdown note-markdown" });
-        ctx.get(listenerCtx).markdownUpdated((_, markdown, prev) => {
-          if (markdown === prev) return;
-          emitted.current = markdown;
-          onChangeRef.current(markdown);
-        });
       })
       .use(commonmark)
       .use(gfm)
       .use(history)
-      .use(listener)
+      .use(syncDocument)
       .use(clipboard)
       .use(cursor);
     void editor.create().then(() => {
+      if (disposed) return;
       editorRef.current = editor;
+      if (emitted.current !== value) syncExternalValue(editor, emitted.current);
       if (focusSignalRef.current > 0) focusView(editor);
     });
     return () => {
-      // o listener serializa com debounce de 200ms e o destroy cancela o
-      // handler pendente — despejar o markdown atual antes de destruir para
-      // não perder a última edição
-      try {
-        const markdown = editorRef.current?.action(getMarkdown());
-        if (markdown && markdown !== emitted.current) {
-          emitted.current = markdown;
-          onChangeRef.current(markdown);
-        }
-      } catch {
-        // editor em criação/estado inválido: nada pendente para despejar
-      }
+      disposed = true;
       editorRef.current = null;
+      root.remove();
       // destroy lida com criação em andamento (retry interno) e remove o DOM.
       void editor.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function syncExternalValue(editor: Editor, markdown: string) {
+    externalUpdate.current = true;
+    try {
+      editor.action(replaceAll(markdown));
+    } finally {
+      externalUpdate.current = false;
+    }
+  }
+
   useEffect(() => {
     if (value === emitted.current) return;
     emitted.current = value;
-    editorRef.current?.action(replaceAll(value));
+    if (editorRef.current) syncExternalValue(editorRef.current, value);
   }, [value]);
 
   useEffect(() => {
@@ -162,7 +179,6 @@ export function MarkdownDoc({
       <div
         ref={rootRef}
         className="doc-editor"
-        aria-label={ariaLabel}
         style={
           placeholder
             ? ({ "--doc-placeholder": `"${placeholder}"` } as CSSProperties)

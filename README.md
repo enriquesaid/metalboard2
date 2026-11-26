@@ -86,7 +86,9 @@ Componentes React (declare `function App()`, use `React.useState` etc.), HTML e 
 
 ## Dados do board
 
-Tudo fica no IndexedDB da origem/dispositivo — o rodapé mostra “Salvo neste dispositivo”. **Exportar board** gera JSON versionado (`format: metalboard, version: 1`); **Importar** substitui o board atual após confirmação e mantém uma cópia temporária com botão *Desfazer importação*. Apenas outputs fixados persistem; sessões de terminal não são restauradas ao reabrir.
+Na primeira abertura, o board pessoal começa com uma página vazia. **Criar documento** adiciona o primeiro bloco. **Explorar exemplo** abre uma demonstração temporária em separado. Se a versão anterior criou os quatro blocos iniciais, **Criar página vazia** mantém a página original acessível no menu de páginas.
+
+Tudo fica no IndexedDB da origem/dispositivo — o rodapé indica o armazenamento local. **Exportar board** gera JSON versionado (`format: metalboard, version: 1`); **Importar** substitui o board atual após confirmação e mantém uma cópia temporária com botão *Desfazer importação*. Apenas outputs fixados persistem; sessões de terminal não são restauradas ao reabrir.
 
 ## Arquitetura
 
@@ -129,7 +131,7 @@ npm test                                          # 47 testes web (dataflow, edg
 cargo test --manifest-path src-tauri/Cargo.toml   # 9 testes nativos (shell e SSRF)
 ```
 
-Licença tldraw necessária para distribuição de produção conforme os termos do SDK: configure `VITE_TLDRAW_LICENSE_KEY` quando aplicável.
+O editor dos builds de produção precisa de uma licença válida do tldraw. Para distribuir o app macOS, configure `VITE_TLDRAW_LICENSE_KEY` com uma chave que cubra o app Tauri (`tauri://localhost`) antes de executar `npm run tauri -- build`. O Vite incorpora a chave durante a compilação. Se o editor estiver bloqueado, **Exportar cópia local** recupera o board salvo no dispositivo. [Licenciamento do SDK](https://tldraw.dev/sdk-features/license-key)
 
 ## Limites deste protótipo
 
@@ -148,7 +150,7 @@ A copy de landing page em [docs/metalboard-landing-copy.md](docs/metalboard-land
 
 ## Página de divulgação e exemplos
 
-Acesse `/apresentacao` no servidor local para abrir o hero de divulgação. O seletor alterna entre duas capturas reais, em `public/marketing/`, e abre o board correspondente:
+Acesse `/` ou `/apresentacao` no navegador para abrir a apresentação. **Abrir meu board** leva a `/?board`. O seletor alterna entre duas capturas reais, em `public/marketing/`, e abre o exemplo correspondente.
 
 - `/?demo=checkout`: diagnóstico de funil mobile/desktop, com dados JSON, preview React interativo, hipótese e plano de verificação.
 - `/?demo=suporte`: triagem de chamados, cálculo de SLA, filtro de urgência e passagem de turno.

@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 const result = await build({
-  entryPoints: ["src/preview.ts"],
+  stdin: {
+    contents: `export { buildPreview, exampleSource } from './src/preview.ts';
+      export { componentTemplates } from './src/component-templates.ts';`,
+    resolveDir: process.cwd(),
+  },
   bundle: true,
   write: false,
   platform: "node",
@@ -25,7 +29,7 @@ const result = await build({
     },
   ],
 });
-const { buildPreview, exampleSource } = await import(
+const { buildPreview, exampleSource, componentTemplates } = await import(
   `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`
 );
 test("React is bundled locally and JSX compiles", () => {
@@ -33,6 +37,21 @@ test("React is bundled locally and JSX compiles", () => {
   assert.match(html, /window.renderPreview\(App, input\)/);
   assert.doesNotMatch(html, /<script src=/);
   assert.match(html, /React.createElement/);
+});
+test("component templates work with their selected preview language", () => {
+  for (const [language, templates] of Object.entries(componentTemplates)) {
+    const ids = new Set(templates.map((template) => template.id));
+    assert.equal(ids.size, templates.length);
+    for (const template of templates) {
+      const html = buildPreview(template.source, language, { projeto: "Metalboard" });
+      if (language === "tsx") {
+        assert.match(html, /function App\(/, template.title);
+        assert.match(html, /React.createElement/, template.title);
+      } else {
+        assert.ok(html.includes(template.source), template.title);
+      }
+    }
+  }
 });
 test("preview denies network and forms", () => {
   for (const language of ["html", "tsx"]) {

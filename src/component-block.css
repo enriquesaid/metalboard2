@@ -1,0 +1,133 @@
+.board-block .component-panel,
+.component-pane {
+  min-width: 0;
+}
+
+.component-pane {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.component-pane .block-empty {
+  flex: 1;
+  padding: 12px;
+}
+
+.board-block .component-actions .ui-action {
+  flex: none;
+  white-space: nowrap;
+}
+
+@container (max-width: 420px) {
+  .board-block .component-actions .ui-action {
+    width: 28px;
+    padding-inline: 0;
+  }
+
+  .board-block .component-actions .ui-action > span {
+    display: none;
+  }
+}
+
+.component-template-dialog {
+  width: min(440px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  padding: clamp(16px, 5vw, 24px);
+  overflow: auto;
+  color: var(--ink-1);
+  background: var(--paper-1);
+  border: 1px solid var(--line-3);
+  border-radius: var(--r-lg);
+  box-shadow: var(--panel-shadow), 0 24px 70px color-mix(in srgb, var(--shadow) 25%, transparent);
+  font-family: var(--font-ui);
+}
+
+.component-template-dialog::backdrop {
+  background: color-mix(in srgb, var(--charcoal) 40%, transparent);
+}
+
+.component-template-dialog h2 {
+  margin: 0 0 18px;
+  font-size: var(--text-lg);
+  font-weight: 550;
+}
+
+.component-template-dialog form,
+.component-template-list {
+  display: grid;
+  gap: 8px;
+}
+
+.component-template-dialog form {
+  gap: 16px;
+}
+
+.component-template-dialog fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.component-template-dialog legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+}
+
+.component-template-languages,
+.component-template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.component-template-actions {
+  justify-content: flex-end;
+}
+
+.component-template-dialog label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-3);
+  border-radius: var(--r-md);
+  background: var(--paper-2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.component-template-dialog label:has(:checked) {
+  border-color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 9%, var(--paper-2));
+}
+
+.component-template-dialog label:has(:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.component-template-dialog input[type="radio"] {
+  flex: none;
+  margin: 0;
+  accent-color: var(--accent-text);
+}
+
+.component-template-list label > span {
+  display: grid;
+  gap: 3px;
+}
+
+.component-template-list label > span > span,
+.component-template-dialog p {
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.component-template-dialog p {
+  margin: 0;
+}

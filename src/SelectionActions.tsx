@@ -1,10 +1,13 @@
-import { GitBranch } from "lucide-react";
-import { DefaultActionsMenu, TldrawUiMenuActionItem, TldrawUiMenuContextProvider, TldrawUiToolbar, useEditor, useUnlockedSelectedShapesCount, useValue } from "tldraw";
+import type { CSSProperties } from "react";
+import { GitBranch, PanelRight, PanelRightClose } from "lucide-react";
+import { DefaultActionsMenu, TldrawUiMenuActionItem, TldrawUiMenuContextProvider, TldrawUiToolbar, TldrawUiToolbarButton, useEditor, useUnlockedSelectedShapesCount, useValue } from "tldraw";
+import { useInspector } from "./InspectorContext";
 import { createMermaidFromSelection, shapeHasMermaidText } from "./mermaid-canvas";
 
 /** Canvas coordinates keep this action attached to the current selection. */
 export function SelectionActions() {
   const editor = useEditor();
+  const { open: inspectorOpen, setOpen: setInspectorOpen } = useInspector();
   const hasUnlockedSelection = useUnlockedSelectedShapesCount(1);
   const selection = useValue("selection actions", () => {
     if (editor.getIsReadonly() || editor.getEditingShapeId() || !editor.isIn("select.idle")) return null;
@@ -22,11 +25,13 @@ export function SelectionActions() {
     const start = editor.pageToViewport({ x: bounds.minX, y: bounds.minY });
     const end = editor.pageToViewport({ x: bounds.maxX, y: bounds.maxY });
     if (end.x < 0 || end.y < 0 || start.x > viewport.w || start.y > viewport.h) return null;
-    const width = Math.min(canGenerate ? 344 : 220, viewport.w - 24);
+    const actionWidth = canGenerate ? 344 : 220;
+    const width = Math.min(actionWidth + (onlyShape ? 44 : 0), viewport.w - 24);
     const top = start.y >= 62 ? start.y - 50 : end.y + 12;
     return {
       count: ids.length,
       canGenerate,
+      canInspect: !!onlyShape,
       width,
       left: Math.max(12, Math.min(start.x, viewport.w - width - 12)),
       top: Math.max(12, Math.min(top, viewport.h - 240)),
@@ -34,12 +39,15 @@ export function SelectionActions() {
   }, [editor]);
 
   if (!selection) return null;
+  const inspectorLabel = inspectorOpen ? "Fechar propriedades" : "Abrir propriedades";
+  const InspectorIcon = inspectorOpen ? PanelRightClose : PanelRight;
   return (
     <div
       className="selection-actions"
+      data-inspector-open={selection.canInspect && inspectorOpen ? "true" : undefined}
       role="group"
       aria-label="Ações da seleção"
-      style={{ left: selection.left, top: selection.top, width: selection.width }}
+      style={{ "--selection-left": `${selection.left}px`, "--selection-top": `${selection.top}px`, "--selection-width": `${selection.width}px` } as CSSProperties}
       onPointerDown={event => event.stopPropagation()}
       onKeyDown={event => event.stopPropagation()}
       onWheel={event => event.stopPropagation()}
@@ -50,19 +58,31 @@ export function SelectionActions() {
           <TldrawUiMenuActionItem actionId="duplicate" disabled={!hasUnlockedSelection} />
           <TldrawUiMenuActionItem actionId="delete" disabled={!hasUnlockedSelection} />
         </TldrawUiMenuContextProvider>
+        {selection.canInspect && <TldrawUiToolbarButton
+          className="selection-inspector-toggle"
+          type="icon"
+          title={inspectorLabel}
+          aria-controls="element-inspector"
+          aria-expanded={inspectorOpen}
+          onClick={(event) => {
+            event.currentTarget.focus({ preventScroll: true });
+            setInspectorOpen(previous => !previous);
+          }}
+        ><InspectorIcon size={14} aria-hidden="true" /></TldrawUiToolbarButton>}
         <DefaultActionsMenu />
       </TldrawUiToolbar>
       {selection.canGenerate &&
       <button
-        className="ui-action"
+        className="ui-action selection-mermaid-action"
+        aria-label="Gerar Mermaid"
         title="Criar um bloco Mermaid a partir da seleção e das setas conectadas"
         onClick={() => {
           createMermaidFromSelection(editor);
           editor.focus();
         }}
       >
-        <GitBranch size={14} />
-        Gerar Mermaid
+        <GitBranch size={14} aria-hidden="true" />
+        <span>Gerar Mermaid</span>
       </button>}
     </div>
   );

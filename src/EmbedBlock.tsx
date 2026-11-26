@@ -1,30 +1,42 @@
 import { useState } from 'react';
 import { useEditor } from 'tldraw';
 import { invoke } from '@tauri-apps/api/core';
-import { ExternalLink, Globe, Play } from 'lucide-react';
+import { ArrowRight, ExternalLink, Globe, Play } from 'lucide-react';
 import { type BlockShape } from './shapes';
-import { config, display } from './dataflow/core';
+import { BlockTabs } from './BlockTabs';
+import { display } from './dataflow/core';
 import { useDataResolver, updateMeta } from './dataflow/editor';
 import { defaultEmbed, parseEmbedUrl, runScrape, type EmbedConfig, type ScrapeFormat, type ScrapePayload } from './dataflow/scrape';
 import { desktopAvailable } from './runtime';
 
 type ScrapeMeta = { url: string; status: number; contentType: string; durationMs: number; completedAt: string; warnings: string[] };
+const embedTabs = [{ id: 'page', label: 'Página' }, { id: 'output', label: 'Extração de dados' }] as const;
 
-export function EmbedBlock({ shape }: { shape: BlockShape }) {
+export function EmbedBlock({ shape, readonly }: { shape: BlockShape; readonly: boolean }) {
   const editor = useEditor(), data = useDataResolver();
   const settings = { ...defaultEmbed, ...(shape.meta.embed as Partial<EmbedConfig>) };
-  const [tab, setTab] = useState('page'), [error, setError] = useState(''), [running, setRunning] = useState(false);
+  const [tab, setTab] = useState<(typeof embedTabs)[number]['id']>('page');
+  const [error, setError] = useState(''), [running, setRunning] = useState(false);
   const saved = shape.meta.scrape as ScrapeMeta | undefined;
   const execution = shape.meta.execution as { status: string; error?: string } | undefined;
-  const patch = (change: Partial<EmbedConfig>) => updateMeta(editor, shape.id, { embed: { ...settings, ...change }, execution: { status: 'stale', error: 'Formato alterado. Extraia novamente.' } });
+  const patch = (change: Partial<EmbedConfig>) => updateMeta(editor, shape.id, {
+    embed: { ...settings, ...change },
+    ...(execution && { execution: { status: 'stale', error: 'Formato alterado. Extraia novamente.' } }),
+  });
   function load() {
+    if (readonly || running) return;
     try {
       const url = parseEmbedUrl(display(data.text(shape, shape.props.content)));
-      updateMeta(editor, shape.id, { embed: { ...settings, loadedUrl: url.toString() }, execution: { status: 'stale', error: 'Página alterada. Extraia novamente.' } });
+      updateMeta(editor, shape.id, {
+        embed: { ...settings, loadedUrl: url.toString() },
+        ...(execution && url.toString() !== settings.loadedUrl && { execution: { status: 'stale', error: 'Página alterada. Extraia novamente.' } }),
+      });
       setError('');
+      setTab('page');
     } catch (e) { setError(String(e)); }
   }
   async function extract() {
+    if (readonly || running) return;
     setError('');
     // A política SSRF depende de resolução de DNS, que só o transporte nativo faz.
     if (!desktopAvailable) { setError('Abra o Metalboard desktop para extrair dados da página.'); return; }
@@ -47,30 +59,35 @@ export function EmbedBlock({ shape }: { shape: BlockShape }) {
     finally { setRunning(false); }
   }
   const result = data.result(shape);
+  const tabsId = `embed-${shape.id}`;
+  const canLoad = !!shape.props.content.trim() && !running && !readonly;
+  const status = running ? 'Extraindo…' : execution?.status === 'stale' ? 'Configuração alterada' : saved ? `HTTP ${saved.status} · ${settings.format === 'json' ? 'JSON' : 'Markdown'}` : !desktopAvailable ? 'Extração disponível no desktop' : 'Aguardando extração';
   return <div className="fetch-content embed-content">
-    <div className="fetch-url">
-      <input aria-label="URL da página" placeholder="https://exemplo.com/pagina" spellCheck={false} value={shape.props.content} onChange={e => editor.updateShape<BlockShape>({ id: shape.id, type: 'block', props: { content: e.target.value } })} onKeyDown={e => { if (e.key === 'Enter') load(); }} />
-      <button className="ui-icon-button ui-icon-button--primary" aria-label="Incorporar página" title="Incorporar a página no bloco" onClick={load}><Play size={14} /></button>
-      {settings.loadedUrl && <button className="ui-icon-button" aria-label="Abrir no navegador" title="Abrir no navegador" onClick={() => window.open(settings.loadedUrl, '_blank', 'noopener')}><ExternalLink size={14} /></button>}
-    </div>
-    <div className="fetch-tabs">{[['page', 'Página'], ['output', 'Output']].map(([id, label]) => <button key={id} className={tab === id ? 'selected' : ''} onClick={() => setTab(id)}>{label}</button>)}</div>
-    {tab === 'page' && <div className="embed-page">
+    <form className="fetch-url" onSubmit={e => { e.preventDefault(); if (canLoad) load(); }}>
+      <input aria-label="URL da página" placeholder="https://exemplo.com/pagina" spellCheck={false} readOnly={readonly || running} value={shape.props.content} onChange={e => {
+        setError('');
+        editor.updateShape<BlockShape>({ id: shape.id, type: 'block', props: { content: e.target.value } });
+      }} />
+      <button type="submit" className="ui-action ui-action--primary block-request-submit" aria-label="Incorporar página" disabled={!canLoad} title="Incorporar a página no bloco"><ArrowRight size={13} aria-hidden="true" /><span>Incorporar</span></button>
+      {settings.loadedUrl && <button type="button" className="ui-icon-button" aria-label="Abrir no navegador" title="Abrir no navegador" onClick={() => window.open(settings.loadedUrl, '_blank', 'noopener')}><ExternalLink size={14} aria-hidden="true" /></button>}
+    </form>
+    <BlockTabs className="fetch-tabs" id={tabsId} label="Página e extração" value={tab} onChange={setTab} tabs={embedTabs} />
+    {tab === 'page' ? <div id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${tab}`} tabIndex={0} className="embed-page">
       {settings.loadedUrl
         ? <iframe className="embed-frame" title={shape.props.title} src={settings.loadedUrl} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerPolicy="no-referrer" loading="lazy" />
-        : <div className="embed-empty"><Globe size={22} /><p>Cole uma URL http(s) e clique no botão para incorporar a página.</p></div>}
-      <p className="embed-note">Sites com X-Frame-Options podem bloquear a incorporação — a extração do output funciona mesmo assim.</p>
-    </div>}
-    {tab === 'output' && <div className="fetch-editor">
-      <fieldset disabled={running}>
-        <label>Formato do output<select aria-label="Formato do output" value={settings.format} onChange={e => patch({ format: e.target.value as ScrapeFormat })}><option value="markdown">Markdown da página</option><option value="json">Relatório JSON</option></select></label>
-        <button className="ui-action ui-action--primary embed-extract" disabled={!shape.props.content.trim() || !desktopAvailable} title={desktopAvailable ? undefined : 'Abra o Metalboard desktop para extrair'} aria-busy={running} onClick={() => void extract()}><Play size={12} />{running ? 'Extraindo…' : 'Extrair dados da página'}</button>
-        <p>Referência: <code>%{config(shape).id}%</code>. A extração busca o HTML pelo transporte nativo (sem CORS) e gera o output no formato escolhido. Caminhos, mapeamento e template podem ser ajustados no painel Dados do elemento.</p>
+        : <div className="block-empty"><Globe size={22} aria-hidden="true" /><strong>Abra uma página no quadro</strong><p>Cole a URL e escolha Incorporar.</p></div>}
+      {settings.loadedUrl && <p className="embed-note">Se o site bloquear a visualização, use Abrir no navegador ou Extração de dados.</p>}
+    </div> : <div id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${tab}`} tabIndex={0} className="fetch-editor">
+      <fieldset disabled={readonly || running}>
+        <label>Formato da saída<select value={settings.format} onChange={e => patch({ format: e.target.value as ScrapeFormat })}><option value="markdown">Markdown da página</option><option value="json">Relatório JSON</option></select></label>
+        <button type="button" className="ui-action ui-action--primary embed-extract" disabled={!canLoad || !desktopAvailable} aria-busy={running} onClick={() => void extract()}><Play size={12} aria-hidden="true" />{running ? 'Extraindo…' : 'Extrair dados da página'}</button>
+        <p>Use a referência do bloco em outros elementos. Ajuste os campos em Dados do elemento.</p>
       </fieldset>
-      {saved && <div className="http-status">HTTP {saved.status} · {saved.durationMs} ms · {new Date(saved.completedAt).toLocaleString('pt-BR')} · {saved.contentType.split(';')[0] || 'sem content-type'}</div>}
-      {saved?.warnings.length ? <div className="data-error">{saved.warnings.join(' ')}</div> : null}
-      <pre>{result.ok ? display(result.value) : result.error}</pre>
+      {saved && <div className="http-status">HTTP {saved.status} · {saved.durationMs} ms · {new Date(saved.completedAt).toLocaleString('pt-BR')} · {saved.contentType.split(';')[0] || 'tipo desconhecido'}</div>}
+      {saved?.warnings.length ? <div className="data-error" role="status">{saved.warnings.join(' ')}</div> : null}
+      {result.ok ? <pre className="block-readable">{display(result.value)}</pre> : <p>{execution ? result.error : 'O resultado aparece aqui após a extração.'}</p>}
     </div>}
-    {(error || execution?.status === 'stale') && <div className="data-error">{error || execution?.error}</div>}
-    <div className="fetch-footer"><code>%{config(shape).id}%</code><span>{running ? 'Extraindo…' : saved ? `HTTP ${saved.status} · ${settings.format === 'json' ? 'JSON' : 'Markdown'}` : 'Não extraído'}</span></div>
+    {error && <div className="data-error" role="alert">{error}</div>}
+    <div className="fetch-footer" role="status">{status}</div>
   </div>;
 }

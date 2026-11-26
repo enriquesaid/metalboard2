@@ -1,4 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod board_file;
+mod desktop;
 mod http;
 mod scrape;
 use std::os::unix::process::CommandExt;
@@ -8,7 +10,7 @@ use std::{
     process::{ChildStdin, Command, Stdio},
     sync::{Arc, Mutex},
 };
-use tauri::{menu::{Menu, MenuItemBuilder, MenuItemKind, PredefinedMenuItem}, Emitter, State};
+use tauri::{Emitter, State};
 struct TerminalProcess {
     pid: u32,
     stdin: ChildStdin,
@@ -177,45 +179,40 @@ fn main() {
     let cleanup = processes.clone();
     let terminals: Terminals = Arc::new(Mutex::new(HashMap::new()));
     let terminal_cleanup = terminals.clone();
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .manage(processes)
         .manage(terminals)
         .manage(http::Requests::default())
-        .menu(|app| {
-            let menu = Menu::default(app)?;
-            if let Some(file_menu) = menu.items()?.into_iter().find_map(|item| match item {
-                MenuItemKind::Submenu(submenu) if submenu.text().ok().as_deref() == Some("File") => Some(submenu),
-                _ => None,
-            }) {
-                let import = MenuItemBuilder::with_id("board.import", "Import Board…")
-                    .accelerator("CmdOrCtrl+O")
-                    .build(app)?;
-                let export = MenuItemBuilder::with_id("board.export", "Export Board…")
-                    .accelerator("CmdOrCtrl+Shift+S")
-                    .build(app)?;
-                let mermaid = MenuItemBuilder::with_id("board.mermaid", "Generate Mermaid from Selection")
-                    .accelerator("CmdOrCtrl+Shift+M")
-                    .build(app)?;
-                let separator = PredefinedMenuItem::separator(app)?;
-                file_menu.prepend_items(&[&import, &export, &mermaid, &separator])?;
-            }
-            Ok(menu)
-        })
-        .on_menu_event(|app, event| {
-            let command = match event.id().as_ref() {
-                "board.import" => Some("import"),
-                "board.export" => Some("export"),
-                "board.mermaid" => Some("mermaid"),
-                _ => None,
-            };
-            if let Some(command) = command {
-                let _ = app.emit("metalboard-menu", command);
-            }
-        })
-        .invoke_handler(tauri::generate_handler![execute_command, start_terminal, write_terminal, cancel_command, http::http_fetch, http::cancel_fetch, scrape::scrape_page])
+        .menu(desktop::menu)
+        .on_menu_event(desktop::on_menu_event);
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .setup(|app| Ok(desktop::remember_window_frame(app)?))
+        .on_window_event(desktop::close_workspace);
+
+    builder
+        .invoke_handler(tauri::generate_handler![
+            execute_command,
+            start_terminal,
+            write_terminal,
+            cancel_command,
+            http::http_fetch,
+            http::cancel_fetch,
+            scrape::scrape_page,
+            board_file::open_board_json,
+            board_file::save_board_json,
+        ])
         .build(tauri::generate_context!())
         .expect("Falha ao iniciar Metalboard")
-        .run(move |_, event| {
+        .run(move |_app, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen {
+                has_visible_windows: false,
+                ..
+            } = event
+            {
+                desktop::show_workspace(_app);
+            }
             if let tauri::RunEvent::Exit = event {
                 for pid in cleanup.lock().unwrap().values() {
                     unsafe {

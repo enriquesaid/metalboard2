@@ -1,20 +1,32 @@
 export const toolbarDocks = [
   'top-left', 'top-center', 'top-right',
-  'middle-left', 'middle-center', 'middle-right',
+  'middle-left', 'middle-right',
   'bottom-left', 'bottom-center', 'bottom-right',
 ] as const;
 export type ToolbarDock = (typeof toolbarDocks)[number];
 export type Rect = { x: number; y: number; w: number; h: number };
 export const dockLabels: Record<ToolbarDock, string> = {
   'top-left': 'Canto superior esquerdo', 'top-center': 'Topo', 'top-right': 'Canto superior direito',
-  'middle-left': 'Meio à esquerda', 'middle-center': 'Centro', 'middle-right': 'Meio à direita',
+  'middle-left': 'Meio à esquerda', 'middle-right': 'Meio à direita',
   'bottom-left': 'Canto inferior esquerdo', 'bottom-center': 'Embaixo', 'bottom-right': 'Canto inferior direito',
 };
 
 export function dockAtPoint(x: number, y: number, width: number, height: number): ToolbarDock {
-  const column = Math.max(0, Math.min(2, Math.floor(x / width * 3)));
-  const row = Math.max(0, Math.min(2, Math.floor(y / height * 3)));
-  return toolbarDocks[row * 3 + column];
+  const horizontal = x < width / 3 ? 'left' : x > width * 2 / 3 ? 'right' : 'center';
+  const vertical = y < height / 3 ? 'top' : y > height * 2 / 3 ? 'bottom' : 'middle';
+  if (vertical === 'middle') return `middle-${x < width / 2 ? 'left' : 'right'}`;
+  return `${vertical}-${horizontal}` as ToolbarDock;
+}
+
+export function moveToolbarDock(dock: ToolbarDock, key: string): ToolbarDock | undefined {
+  const row = dock.startsWith('top') ? 'top' : dock.startsWith('bottom') ? 'bottom' : 'middle';
+  const column = dock.endsWith('left') ? 'left' : dock.endsWith('right') ? 'right' : 'center';
+  switch (key) {
+    case 'ArrowLeft': return row === 'middle' ? 'middle-left' : `${row}-${column === 'right' ? 'center' : 'left'}`;
+    case 'ArrowRight': return row === 'middle' ? 'middle-right' : `${row}-${column === 'left' ? 'center' : 'right'}`;
+    case 'ArrowUp': return row === 'bottom' ? `middle-${column === 'right' ? 'right' : 'left'}` : `top-${column}`;
+    case 'ArrowDown': return row === 'top' ? `middle-${column === 'right' ? 'right' : 'left'}` : `bottom-${column}`;
+  }
 }
 
 export function overlaps(a: Rect, b: Rect, gap = 8) {
